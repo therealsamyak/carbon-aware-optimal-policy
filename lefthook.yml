@@ -1,0 +1,26 @@
+pre-commit:
+  commands:
+    py-lint:
+      glob: "**/*.py"
+      run: uvx ruff check --fix --force-exclude {staged_files}
+      stage_fixed: true
+
+    py-format:
+      glob: "**/*.py"
+      run: uvx ruff format {staged_files}
+      stage_fixed: true
+
+    json-md-yml-format:
+      exclude:
+        - "results/**/*"
+        - "logs/**/*"
+        - "config*.jsonc"
+        - "**/config*.jsonc"
+      run: |
+        if command -v bunx >/dev/null 2>&1; then
+          bunx oxfmt@latest --no-error-on-unmatched-pattern {staged_files}
+        else
+          echo "bunx not found, skipping prettier formatting"
+          exit 0
+        fi
+      stage_fixed: true
