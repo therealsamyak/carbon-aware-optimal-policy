@@ -1,7 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 
-with open("model-data/power_profiles.json", "r") as f:
+with open("model-profiler/power_profiles.json", "r") as f:
     data = json.load(f)
 
 models = list(data.keys())

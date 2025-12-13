@@ -21,8 +21,8 @@ def main():
     profiler = PowerProfiler()
 
     # Check if benchmark images exist
-    image1 = Path("model-data/benchmark-images/image1.png")
-    image2 = Path("model-data/benchmark-images/image2.jpeg")
+    image1 = Path("model-profiler/benchmark-images/image1.png")
+    image2 = Path("model-profiler/benchmark-images/image2.jpeg")
 
     if not image1.exists():
         logger.error(f"Benchmark image not found: {image1}")

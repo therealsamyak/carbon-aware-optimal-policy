@@ -19,7 +19,7 @@ class PowerProfiler:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.power_profiles: Dict[str, Dict] = {}
-        self.profiles_file = Path("model-data/power_profiles.json")
+        self.profiles_file = Path("model-profiler/power_profiles.json")
 
         # Require powermetrics - no fallback
         if not self._check_powermetrics_available():
@@ -445,7 +445,7 @@ class PowerProfiler:
 
 def load_power_profiles() -> Dict[str, Dict]:
     """Load power profiles from file."""
-    profiles_file = Path("model-data/power_profiles.json")
+    profiles_file = Path("model-profiler/power_profiles.json")
     try:
         if profiles_file.exists():
             with open(profiles_file, "r") as f:
