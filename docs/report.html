@@ -12,6 +12,14 @@
       async
       src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
     ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll();
+    </script>
   </head>
   <body>
     <!-- Top Navigation -->
@@ -277,7 +285,90 @@
             </ul>
             <p>💡 Tip: Add images, diagrams, and code snippets. Make your system reproducible.</p>
 
-            <h3>3.1 System Architecture</h3>
+            <h3>3.1 Model Profiler</h3>
+
+            <h4>3.1.1 Power and Latency Measurement</h4>
+            <p>
+              A Model task is defined as loading an image and running the default classifier
+              function on it. The task involves (implementation in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/yolo_model.py"
+                target="_blank"
+                >model-profiler/yolo_model.py</a
+              >):
+            </p>
+
+            <pre><code class="language-python">def model_task(model_name, model_version, image_path):
+    import time
+    
+    # Load YOLOv10 model
+    model = YOLO(f"yolov10{model_version.lower()}.pt")
+    
+    # Measure inference time
+    start_time = time.time()
+    
+    # Run inference on image
+    results = model(image_path)
+    
+    end_time = time.time()
+    inference_time = end_time - start_time
+    
+    # Count detections
+    if results and len(results) > 0:
+        detection_count = len(results[0].boxes)
+    else:
+        detection_count = 0
+    
+    return True, detection_count, inference_time</code></pre>
+
+            <p>During this task, the power profiler measures:</p>
+            <ul>
+              <li>
+                <strong>Power consumption</strong>: Baseline, idle, and inference power in
+                milliwatts using macOS
+                <a href="https://ss64.com/mac/powermetrics.html" target="_blank">powermetrics</a>
+              </li>
+              <li>
+                <strong>Energy efficiency</strong>: Energy per inference in mWh calculated from
+                power draw and inference time
+              </li>
+              <li>
+                <strong>Performance metrics</strong>: Inference time, success rate, detection count
+              </li>
+              <li><strong>Model variants</strong>: All YOLOv10 versions (N, S, M, B, L, X)</li>
+            </ul>
+
+            <p>
+              The profiler uses <code>powermetrics</code> with sudo access to capture CPU/GPU/ANE
+              power consumption during the model task, storing results in
+              <code>power_profiles.json</code>. Each model is benchmarked across 1000 iterations
+              with outlier removal for stable baseline measurements. Time per inference is tracked
+              to store latency information alongside power data. Outlier removal trims the top and
+              bottom 20% of power readings to eliminate anomalies and uses median values for robust
+              statistics.
+            </p>
+
+            <h4>3.1.2 Accuracy Dataset Analysis</h4>
+            <p>
+              Model accuracy values are extracted from the COCO dataset benchmark results stored in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/model-data.csv"
+                target="_blank"
+                >model-data.csv</a
+              >. The dataset contains COCO mAP 50-95 scores for each YOLOv10 model variant, provided
+              by
+              <a href="https://docs.ultralytics.com/models/yolov10/" target="_blank"
+                >Ultralytics official documentation</a
+              >.
+            </p>
+
+            <p>
+              The accuracy analysis processes the CSV data to provide approximate accuracy values
+              for each YOLOv10 model version, enabling the controller to make informed tradeoffs
+              between detection accuracy and energy consumption.
+            </p>
+
+            <!-- <h3>3.1 System Architecture</h3>
             <p>Include a block diagram or pipeline figure.</p>
 
             <h3>3.2 Data Pipeline</h3>
@@ -290,7 +381,7 @@
             <p>Explain equipment, libraries, or frameworks.</p>
 
             <h3>3.5 Key Design Decisions & Rationale</h3>
-            <p>Describe the main design decisions you made.</p>
+            <p>Describe the main design decisions you made.</p> -->
           </section>
 
           <!-- Evaluation & Results Section -->
