@@ -7,6 +7,11 @@
     <meta name="googlebot" content="noindex, nofollow" />
     <title>Report - Optimal Charge Security Camera</title>
     <link rel="stylesheet" href="styles.css" />
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
+    ></script>
   </head>
   <body>
     <!-- Top Navigation -->
@@ -69,51 +74,191 @@
 
             <h3>1.1 Motivation & Objective</h3>
             <p>
-              As climate change accelerates, organizations face mounting pressure to reduce their
-              carbon footprint across all operations. While significant research has addressed
-              carbon-aware computing in data centers and high-performance systems, small-scale IoT
-              devices remain overlooked. Battery-powered security cameras represent a massive,
-              untapped opportunity for carbon optimization—they operate continuously, consume
-              significant energy, and often charge during peak carbon intensity periods without
-              awareness.
+              While significant research has addressed carbon-aware computing in data centers and
+              high-performance systems, small-scale IoT devices remain overlooked. Battery-powered
+              devices with flexible charging represent a massive, untapped opportunity for carbon
+              optimization. If they are plugged in all the time, they can charge even when it is not
+              carbon-efficient to do so.
             </p>
             <p>
               Our objective is to develop an intelligent controller that optimizes both
-              computational and charging decisions for battery-powered security cameras. The system
-              must balance competing priorities: maintaining security performance through
-              appropriate model selection, ensuring low latency for real-time monitoring, minimizing
-              carbon emissions through strategic charging timing, and preserving battery longevity.
-              This requires a holistic approach that considers the entire operational lifecycle
-              rather than optimizing individual components in isolation.
+              computational (which model to select) and charging decisions for battery-powered
+              security cameras. With this approach, we can charge when it is more carbon-efficient,
+              rather than always charging regardless of the carbon cost. We balance our model
+              selection to account for this carbon-efficiency
+            </p>
+            <p>
+              Because there are differences of opinion on how much each factor (accuracy, latency,
+              carbon footprint, camera uptime) matters to an individual, we define a specific reward
+              function that balances these factors. The system supports dynamic weights, so if the
+              initial weights are not balanced to a specifc use-case, they are adjustable for other
+              use-cases.
             </p>
 
             <h3>1.2 State of the Art & Its Limitations</h3>
             <p>
-              How is this problem addressed today?<br />
-              What gaps or limitations exist?<br />
-              Cite prior work using a consistent style like [Smith21].
+              Current carbon-aware research is focused around data-center energy considerations.
+              Data centers incur large electricity costs and carbon emissions. There are 2 main
+              works related to this:
+            </p>
+            <ul>
+              <li>
+                Carbon- and Precedence-Aware Scheduling for Data Processing Clusters<sup
+                  id="cite-ref-2"
+                  ><a href="#cite-note-2">[2]</a></sup
+                >
+                - This paper is focused on scheduling data center workloads such that time
+                requirements are met, but we delay lower priority tasks to carbon-efficient times.
+              </li>
+              <li>
+                Carbon-Aware Workload Management in Data Centers<sup id="cite-ref-3"
+                  ><a href="#cite-note-3">[3]</a></sup
+                >
+                - This paper is focused on integrating energy components besides the grid, such as
+                cooling, heating, solar panels, batteries, energy storage, heat pumps, and heating
+                connections to maintain existing data-center workloads while minimizing carbon
+                emissions.
+              </li>
+            </ul>
+
+            <p>
+              Both of these papers focus on large scale systems with large scale workloads. These
+              approachs are not directly applicable to small-scale IoT devices, which have very
+              limited bandwitdh and very small battery capacity (energy storage).
             </p>
 
             <h3>1.3 Novelty & Rationale</h3>
-            <p>What is new about your approach, and why do you expect it to succeed?</p>
+            <p>
+              Our approach relies on imitating an Oracle controller. This Oracle controller can see
+              into the future and has full knowledge of the carbon timeseries before it occurs.
+              Using that knowledge, we can solve the full discrete MDP based on the system state
+              over a given finite horizon of time. We can then train a neural network to imitate
+              this Oracle Controller, giving us a controller that can make decisions in real-time.
+            </p>
+
+            <p>
+              Additionally, as carbon energy generally follows a sinusoidal pattern, we can leverage
+              this neural network to also gain insight on the ebb and flow of carbon timeseries,
+              further giving us more optimization potential.
+            </p>
+
+            <p>
+              Finally, by modelling this problem as an MDP (and POMDP), we can take advantage of
+              existing solving techniques (ex. Data-driven Planning via Imitation Learning<sup
+                id="cite-ref-4"
+                ><a href="#cite-note-4">[4]</a></sup
+              >), which are well-studied and have multiple proven solutions.
+            </p>
 
             <h3>1.4 Potential Impact</h3>
-            <p>If successful, what technical or broader impact could this project have?</p>
+            <p>
+              This system could easily be extended to other battery-powered devices that make
+              decisions. Any system with a form of energy storage and energy input can take
+              advantage of our models to create their own controllers that balance clean energy.
+            </p>
 
             <h3>1.5 Challenges</h3>
-            <p>List the main technical, practical, or methodological challenges.</p>
+            <p>
+              Implementing an energy-aware decision-making controller for battery-powered edge
+              devices presents several challenges. The primary difficulty is solving and generating
+              sufficient training data from the Oracle MDP, as the state and action spaces grow
+              quickly even under coarse discretization. Specific examples include:
+            </p>
+            <ul>
+              <li>
+                Deciding how static or dynamic the system should be to user-input. We can allow the
+                user to dynamically adjust their requirements during runtime, but adjusting an
+                already trained controller could be time-consuming, complex, or expensive,
+                especially as we still have to maintain our task interval.
+              </li>
+              <li>
+                Discretization of continuous variables. More precision means more runtime, but too
+                much precision can make simple calculations more complex due to floating point
+                errors.
+              </li>
+              <li>
+                Carbon patterns vary from region to region. As such, we need to ensure as vast of
+                variety carbon data as possible from different times of the year for a complete
+                picture.
+              </li>
+            </ul>
 
             <h3>1.6 Metrics of Success</h3>
-            <p>What are the specific, measurable criteria for evaluating your project?</p>
+            <p>
+              We compare our trained Imitation Controller to the Oracle controller over the
+              following metrics:
+            </p>
+            <ul>
+              <li>
+                Accuracy - how many times over the horizon does the model selected meet the user's
+                requirements?
+              </li>
+              <ul>
+                <li>
+                  Success - number of times the selected model met the user's requirements, and had
+                  enough energy to run.
+                </li>
+                <li>
+                  Small Miss - number of times the selected model didn't meet the user's
+                  requirements, and had enough energy to run.
+                </li>
+                <li>
+                  Failure - number of times a model was unable to run, due to a lack of energy.
+                </li>
+              </ul>
+              <li>
+                Utility - differences in the rewards of the Oracle Controller and the Imitation
+                Controller decisions over each horizon.
+              </li>
+              <li>
+                "Feasibility-Normalized Effective Uptime" - at each timestep \( t \), let \( F_t \)
+                be the set of models feasible under the current energy constraint, and let \( a_t^*
+                = \max_{m \in F_t} a(m) \) be the best achievable accuracy. If a model \( m_t \) is
+                selected and runs, the timestep is scored as \( \frac{a(m_t)}{a_t^*} \); if no model
+                is ran (Failure) it scores a \( 0 \). The metric is computed as the average score
+                over the horizon.
+              </li>
+            </ul>
           </section>
 
           <!-- Related Work Section -->
           <section id="related-work" class="section">
             <h2>2. Related Work</h2>
+
+            <h3>2.1 Carbon-Aware Computing in Large-Scale Systems</h3>
             <p>
-              Summarize prior works relevant to your project.<br />
-              For each: what did the authors do, how is it related, and what gap remains?<br /><br />
-              Reference all citations in <strong>Section 6</strong>.
+              <strong>Carbon- and Precedence-Aware Scheduling for Data Processing Clusters</strong
+              ><sup id="cite-ref-2"><a href="#cite-note-2">[2]</a></sup> developed scheduling
+              algorithms that delay lower-priority data center workloads to carbon-efficient times
+              while meeting time requirements. The authors focused on large-scale data processing
+              clusters with significant energy consumption. While their approach successfully
+              reduces carbon emissions in data centers, it assumes substantial energy storage and
+              computational resources unavailable to small IoT devices.
+            </p>
+            <p>
+              <strong>Carbon-Aware Workload Management in Data Centers</strong
+              ><sup id="cite-ref-3"><a href="#cite-note-3">[3]</a></sup> proposed integrating
+              multiple energy components including solar panels, batteries, and energy storage
+              systems to minimize carbon emissions while maintaining data center workloads. Their
+              multi-energy integration approach is effective for large facilities but requires
+              complex infrastructure and significant capital investment, making it unsuitable for
+              individual IoT devices.
+            </p>
+
+            <h3>2.2 Planning and Control Methods</h3>
+            <p>
+              <strong>Data-driven Planning via Imitation Learning</strong
+              ><sup id="cite-ref-4"><a href="#cite-note-4">[4]</a></sup> introduced a framework for
+              training neural networks to imitate optimal planners in complex decision-making
+              problems. This paper specifically addresses using imitation learning to solve POMDPs,
+              which is directly relevant to our problem. However, this paper is focused on robotics
+              planning, and doesn't specifically address planning based on carbon-emissions.
+            </p>
+
+            <h3>Other Related Works</h3>
+            <p>
+              Other works in Section VI are not as directly related to this problem as the other
+              papers above are, but still give valuable insight into applications of POMDPs.
             </p>
           </section>
 
@@ -188,7 +333,7 @@
               and all software and datasets uses.
             </p>
 
-            <h3>Data-driven Planning via Imitation Learning</h3>
+            <h3 id="cite-note-4">Data-driven Planning via Imitation Learning<cite>[4]</cite></h3>
             <p>
               Choudhury, S., Bhardwaj, M., Arora, S., Kapoor, A., Ranade, G., Scherer, S., & Dey, D.
               Data-driven Planning via Imitation Learning. The Robotics Institute, Carnegie Mellon
@@ -196,7 +341,9 @@
               <a href="https://arxiv.org/abs/2008.09719" target="_blank">[Paper]</a>
             </p>
 
-            <h3>Carbon-Aware Task Scheduling</h3>
+            <h3 id="cite-note-2">
+              Carbon- and Precedence-Aware Scheduling for Data Processing Clusters<cite>[2]</cite>
+            </h3>
             <p>
               Lechowicz, A., Shenoy, R., Bashir, N., Hajiesmaili, M., Wierman, A., & Delimitrou, C.
               Carbon- and Precedence-Aware Scheduling for Data Processing Clusters.
@@ -204,7 +351,9 @@
               <a href="https://arxiv.org/abs/2502.09717" target="_blank">[Paper]</a>
             </p>
 
-            <h3>Carbon-Aware Workload Management in Data Centers</h3>
+            <h3 id="cite-note-3">
+              Carbon-Aware Workload Management in Data Centers<cite>[3]</cite>
+            </h3>
             <p>
               Nkwawir, B.W., Kayalica, M.O., Guven, D., Duman, A.C., & Erden, H.S. Carbon-Aware
               Workload Management in Data Centers: A Multi-Energy Integration Approach. In
@@ -214,7 +363,7 @@
               <a href="https://doi.org/10.1145/3679240.3735104" target="_blank">[Paper]</a>
             </p>
 
-            <h3>Monte-Carlo Planning in Large POMDPs</h3>
+            <h3 id="cite-note-5">Monte-Carlo Planning in Large POMDPs<cite>[5]</cite></h3>
             <p>
               Silver, D., & Veness, J. Monte-Carlo Planning in Large POMDPs. MIT & UNSW, Sydney,
               Australia.
@@ -225,7 +374,11 @@
               >
             </p>
 
-            <h3>Optimal Control of Markov Processes with Incomplete State Information I</h3>
+            <h3 id="cite-note-6">
+              Optimal Control of Markov Processes with Incomplete State Information I<cite
+                >[6]</cite
+              >
+            </h3>
             <p>
               Åström, K.J. Optimal Control of Markov Processes with Incomplete State Information I.
               In Journal of Mathematical Analysis and Applications 10. p.174-205, 1965.
