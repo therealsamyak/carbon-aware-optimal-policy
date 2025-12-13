@@ -14,8 +14,8 @@
       <a href="index.html" class="logo">OCS</a>
       <div class="nav-links">
         <a href="index.html">Home</a>
-        <a href="docs.html">Documentation</a>
         <a href="report.html" class="active">Report</a>
+        <a href="docs.html">Documentation</a>
         <a href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2" target="_blank"
           >GitHub</a
         >
@@ -27,8 +27,14 @@
       <aside class="sidebar">
         <h2>Table of Contents</h2>
         <ul class="toc-links">
-          <li><a href="#introduction">Introduction</a></li>
-          <li><a href="#methodology">Methodology</a></li>
+          <li><a href="#abstract">Abstract</a></li>
+          <li><a href="#introduction">1. Introduction</a></li>
+          <li><a href="#related-work">2. Related Work</a></li>
+          <li><a href="#technical-approach">3. Technical Approach</a></li>
+          <li><a href="#evaluation-results">4. Evaluation & Results</a></li>
+          <li><a href="#discussion-conclusions">5. Discussion & Conclusions</a></li>
+          <li><a href="#references">6. References</a></li>
+          <li><a href="#supplementary-material">7. Supplementary Material</a></li>
         </ul>
 
         <div class="footer-info">
@@ -39,27 +45,215 @@
       <!-- Main Content -->
       <main class="main-content">
         <div class="content-wrapper">
-          <h1>Report</h1>
-          <p>Comprehensive project report and findings</p>
+          <h1>Optimal Charge Security Camera</h1>
 
-          <!-- Introduction Section -->
-          <section id="introduction" class="section">
-            <h2>Introduction</h2>
+          <!-- Abstract Section -->
+          <section id="abstract" class="section">
+            <h2>Abstract</h2>
             <p>
-              This section will contain the introduction to the project, outlining the motivation
-              behind developing an energy-aware security camera system and the challenges addressed
-              in this research.
+              Carbon awareness is becoming increasingly important in the modern world, and many
+              companies are striving to be carbon-neutral in their operations. Existing research
+              into carbon-aware computing has focused on high-power, high-performance computing
+              systems, but there has not been any awareness into carbon-aware battery charging,
+              especially for small-scale IoT devices. In this paper, we propose a controller
+              framework for a battery-powered security camera that balances the tradeoff
+              betweenaccuracy, latency, carbon footprint, and charging decisions based on a
+              pre-defined reward function. This controller picks the optimal models and when to
+              charge every task interval over a horizon of time.
             </p>
           </section>
 
-          <!-- Methodology Section -->
-          <section id="methodology" class="section">
-            <h2>Methodology</h2>
+          <!-- Introduction Section -->
+          <section id="introduction" class="section">
+            <h2>1. Introduction</h2>
+
+            <h3>1.1 Motivation & Objective</h3>
             <p>
-              This section will detail the methodology used in the project, including the simulation
-              framework, controller implementations, and evaluation approaches used to assess system
-              performance.
+              As climate change accelerates, organizations face mounting pressure to reduce their
+              carbon footprint across all operations. While significant research has addressed
+              carbon-aware computing in data centers and high-performance systems, small-scale IoT
+              devices remain overlooked. Battery-powered security cameras represent a massive,
+              untapped opportunity for carbon optimization—they operate continuously, consume
+              significant energy, and often charge during peak carbon intensity periods without
+              awareness.
             </p>
+            <p>
+              Our objective is to develop an intelligent controller that optimizes both
+              computational and charging decisions for battery-powered security cameras. The system
+              must balance competing priorities: maintaining security performance through
+              appropriate model selection, ensuring low latency for real-time monitoring, minimizing
+              carbon emissions through strategic charging timing, and preserving battery longevity.
+              This requires a holistic approach that considers the entire operational lifecycle
+              rather than optimizing individual components in isolation.
+            </p>
+
+            <h3>1.2 State of the Art & Its Limitations</h3>
+            <p>
+              How is this problem addressed today?<br />
+              What gaps or limitations exist?<br />
+              Cite prior work using a consistent style like [Smith21].
+            </p>
+
+            <h3>1.3 Novelty & Rationale</h3>
+            <p>What is new about your approach, and why do you expect it to succeed?</p>
+
+            <h3>1.4 Potential Impact</h3>
+            <p>If successful, what technical or broader impact could this project have?</p>
+
+            <h3>1.5 Challenges</h3>
+            <p>List the main technical, practical, or methodological challenges.</p>
+
+            <h3>1.6 Metrics of Success</h3>
+            <p>What are the specific, measurable criteria for evaluating your project?</p>
+          </section>
+
+          <!-- Related Work Section -->
+          <section id="related-work" class="section">
+            <h2>2. Related Work</h2>
+            <p>
+              Summarize prior works relevant to your project.<br />
+              For each: what did the authors do, how is it related, and what gap remains?<br /><br />
+              Reference all citations in <strong>Section 6</strong>.
+            </p>
+          </section>
+
+          <!-- Technical Approach Section -->
+          <section id="technical-approach" class="section">
+            <h2>3. Technical Approach</h2>
+            <p>
+              Describe your system, methodology, algorithms, and design choices.<br />
+              Use figures generously:
+            </p>
+            <ul>
+              <li>System architecture diagram</li>
+              <li>Data pipeline</li>
+              <li>Algorithm/model block diagram</li>
+              <li>Hardware setup photos</li>
+            </ul>
+            <p>💡 Tip: Add images, diagrams, and code snippets. Make your system reproducible.</p>
+
+            <h3>3.1 System Architecture</h3>
+            <p>Include a block diagram or pipeline figure.</p>
+
+            <h3>3.2 Data Pipeline</h3>
+            <p>Explain how data is collected, processed, and used.</p>
+
+            <h3>3.3 Algorithm / Model Details</h3>
+            <p>Use math, pseudocode, or diagrams as needed.</p>
+
+            <h3>3.4 Hardware / Software Implementation</h3>
+            <p>Explain equipment, libraries, or frameworks.</p>
+
+            <h3>3.5 Key Design Decisions & Rationale</h3>
+            <p>Describe the main design decisions you made.</p>
+          </section>
+
+          <!-- Evaluation & Results Section -->
+          <section id="evaluation-results" class="section">
+            <h2>4. Evaluation & Results</h2>
+            <p>
+              Present experimental results with clarity and professionalism.<br /><br />
+              Include:
+            </p>
+            <ul>
+              <li>Plots (accuracy, latency, energy, error curves)</li>
+              <li>Tables (comparisons with baselines)</li>
+              <li>
+                Qualitative visualizations (spectrograms, heatmaps, bounding boxes, screenshots)
+              </li>
+              <li>Ablation studies</li>
+              <li>Error analysis / failure cases</li>
+            </ul>
+            <p>Each figure should have a caption and a short interpretation.</p>
+          </section>
+
+          <!-- Discussion & Conclusions Section -->
+          <section id="discussion-conclusions" class="section">
+            <h2>5. Discussion & Conclusions</h2>
+            <p>
+              Synthesize the main insights from your work.<br /><br />
+              <strong>What worked well and why?</strong><br />
+              <strong>What didn't work and why?</strong><br />
+              <strong>What limitations remain?</strong><br />
+              <strong>What would you explore next if you had more time?</strong><br /><br />
+              This should synthesize—not merely repeat—your results.
+            </p>
+          </section>
+
+          <!-- References Section -->
+          <section id="references" class="section">
+            <h2>6. References</h2>
+            <p>
+              Provide full citations for all sources (academic papers, websites, etc.) referenced
+              and all software and datasets uses.
+            </p>
+
+            <h3>Data-driven Planning via Imitation Learning</h3>
+            <p>
+              Choudhury, S., Bhardwaj, M., Arora, S., Kapoor, A., Ranade, G., Scherer, S., & Dey, D.
+              Data-driven Planning via Imitation Learning. The Robotics Institute, Carnegie Mellon
+              University & Microsoft Research.
+              <a href="https://arxiv.org/abs/2008.09719" target="_blank">[Paper]</a>
+            </p>
+
+            <h3>Carbon-Aware Task Scheduling</h3>
+            <p>
+              Lechowicz, A., Shenoy, R., Bashir, N., Hajiesmaili, M., Wierman, A., & Delimitrou, C.
+              Carbon- and Precedence-Aware Scheduling for Data Processing Clusters.
+              arXiv:2502.09717, 2025.
+              <a href="https://arxiv.org/abs/2502.09717" target="_blank">[Paper]</a>
+            </p>
+
+            <h3>Carbon-Aware Workload Management in Data Centers</h3>
+            <p>
+              Nkwawir, B.W., Kayalica, M.O., Guven, D., Duman, A.C., & Erden, H.S. Carbon-Aware
+              Workload Management in Data Centers: A Multi-Energy Integration Approach. In
+              Proceedings of 16th ACM International Conference on Future and Sustainable Energy
+              Systems (E-Energy '25), Association for Computing Machinery, New York, NY, USA,
+              907–914.
+              <a href="https://doi.org/10.1145/3679240.3735104" target="_blank">[Paper]</a>
+            </p>
+
+            <h3>Monte-Carlo Planning in Large POMDPs</h3>
+            <p>
+              Silver, D., & Veness, J. Monte-Carlo Planning in Large POMDPs. MIT & UNSW, Sydney,
+              Australia.
+              <a
+                href="https://davidstarsilver.wordpress.com/wp-content/uploads/2025/04/monte-carlo-planning-in-large-pomdps.pdf"
+                target="_blank"
+                >[Paper]</a
+              >
+            </p>
+
+            <h3>Optimal Control of Markov Processes with Incomplete State Information I</h3>
+            <p>
+              Åström, K.J. Optimal Control of Markov Processes with Incomplete State Information I.
+              In Journal of Mathematical Analysis and Applications 10. p.174-205, 1965.
+              <a href="https://lup.lub.lu.se/record/8867084" target="_blank">[Paper]</a>
+            </p>
+          </section>
+
+          <!-- Supplementary Material Section -->
+          <section id="supplementary-material" class="section">
+            <h2>7. Supplementary Material</h2>
+
+            <h3>7.a. Datasets</h3>
+            <p>Describe each dataset:</p>
+            <ul>
+              <li>Source and URL</li>
+              <li>Data format</li>
+              <li>Preprocessing steps</li>
+              <li>Labeling/annotation efforts</li>
+            </ul>
+            <p>Include your internal dataset if you collected one.</p>
+
+            <h3>7.b. Software</h3>
+            <p>List:</p>
+            <ul>
+              <li>External libraries or models</li>
+              <li>Internal modules you wrote</li>
+              <li>Links to repos or documentation</li>
+            </ul>
           </section>
         </div>
       </main>
