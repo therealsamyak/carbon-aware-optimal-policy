@@ -22,12 +22,11 @@ const setActiveNavLink = () => {
     link.classList.remove("active");
     const href = link.getAttribute("href");
 
-    if (
-      (currentPage === "" || currentPage === "index.html") &&
-      href === "index.html"
-    ) {
+    if ((currentPage === "" || currentPage === "index.html") && href === "index.html") {
       link.classList.add("active");
     } else if (currentPage === "docs.html" && href === "docs.html") {
+      link.classList.add("active");
+    } else if (currentPage === "report.html" && href === "report.html") {
       link.classList.add("active");
     }
   });
