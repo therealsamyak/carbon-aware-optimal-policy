@@ -300,6 +300,11 @@ class PowerProfiler:
         end_time = time.time()
         total_duration = end_time - start_time
 
+        # Account for delay between iterations to get actual inference time
+        total_delay_time = iterations * 4.0  # 4.0s delay per iteration
+        actual_inference_duration = total_duration - total_delay_time
+        avg_inference_time_seconds = actual_inference_duration / iterations
+
         # Calculate statistics with outlier removal for more stable results
         sorted_powers = sorted(inference_powers)
         # Remove top and bottom 20% as outliers for consistency
@@ -321,9 +326,6 @@ class PowerProfiler:
         # Calculate model-specific power (difference from baseline)
         # Use absolute difference to get actual additional power consumption
         model_power_mw = abs(avg_inference_power - baseline_power)
-
-        # Calculate energy per inference using actual inference time (not total duration)
-        avg_inference_time_seconds = total_duration / iterations
         energy_per_inference_mwh = (
             (model_power_mw * avg_inference_time_seconds) / 3600.0
             if model_power_mw > 0
