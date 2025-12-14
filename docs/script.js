@@ -40,13 +40,24 @@ const highlightCurrentSection = () => {
 
   const updateActiveTocLink = () => {
     let currentSection = "";
+    const viewportHeight = window.innerHeight;
+    const topHalfThreshold = viewportHeight * 0.5;
 
     sections.forEach((section) => {
       const rect = section.getBoundingClientRect();
-      if (rect.top <= 100) {
+      if (rect.top <= topHalfThreshold && rect.bottom >= 0) {
         currentSection = section.getAttribute("id");
       }
     });
+
+    // Keep the last highlighted section if no new section is in range
+    if (!currentSection) {
+      const highlightedLink = document.querySelector(".sidebar .toc-links a.highlight");
+      if (highlightedLink) {
+        const href = highlightedLink.getAttribute("href");
+        currentSection = href.substring(1); // Remove the '#' prefix
+      }
+    }
 
     tocLinks.forEach((link) => {
       link.classList.remove("highlight");

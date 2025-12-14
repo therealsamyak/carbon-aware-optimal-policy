@@ -41,13 +41,53 @@
         <h2>Table of Contents</h2>
         <ul class="toc-links">
           <li><a href="#abstract">Abstract</a></li>
-          <li><a href="#introduction">1. Introduction</a></li>
-          <li><a href="#related-work">2. Related Work</a></li>
-          <li><a href="#technical-approach">3. Technical Approach</a></li>
+          <li>
+            <a href="#introduction">1. Introduction</a>
+            <ul class="toc-sublinks">
+              <li><a href="#motivation-objective">1.1 Motivation & Objective</a></li>
+              <li>
+                <a href="#state-of-art-limitations">1.2 State of the Art & Its Limitations</a>
+              </li>
+              <li><a href="#novelty-rationale">1.3 Novelty & Rationale</a></li>
+              <li><a href="#potential-impact">1.4 Potential Impact</a></li>
+              <li><a href="#challenges">1.5 Challenges</a></li>
+              <li><a href="#metrics-success">1.6 Metrics of Success</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#related-work">2. Related Work</a>
+            <ul class="toc-sublinks">
+              <li>
+                <a href="#carbon-aware-large-scale"
+                  >2.1 Carbon-Aware Computing in Large-Scale Systems</a
+                >
+              </li>
+              <li><a href="#planning-control-methods">2.2 Planning and Control Methods</a></li>
+              <li><a href="#other-related-works">Other Related Works</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#technical-approach">3. Technical Approach</a>
+            <ul class="toc-sublinks">
+              <li><a href="#model-profiler">3.1 Model Profiler</a></li>
+              <li><a href="#system-parameters">3.2 System Parameters (per Controller)</a></li>
+              <li><a href="#oracle-controller">3.3 Oracle Controller</a></li>
+              <li>
+                <a href="#custom-controller">3.4 Custom Controller (POMDP, Imitation Learning)</a>
+              </li>
+              <li><a href="#naive-controller">3.5 Naive Controller</a></li>
+            </ul>
+          </li>
           <li><a href="#evaluation-results">4. Evaluation & Results</a></li>
           <li><a href="#discussion-conclusions">5. Discussion & Conclusions</a></li>
           <li><a href="#references">6. References</a></li>
-          <li><a href="#supplementary-material">7. Supplementary Material</a></li>
+          <li>
+            <a href="#supplementary-material">7. Supplementary Material</a>
+            <ul class="toc-sublinks">
+              <li><a href="#datasets">7.a. Datasets</a></li>
+              <li><a href="#software">7.b. Software</a></li>
+            </ul>
+          </li>
         </ul>
 
         <div class="footer-info">
@@ -80,7 +120,7 @@
           <section id="introduction" class="section">
             <h2>1. Introduction</h2>
 
-            <h3>1.1 Motivation & Objective</h3>
+            <h3 id="motivation-objective">1.1 Motivation & Objective</h3>
             <p>
               While significant research has addressed carbon-aware computing in data centers and
               high-performance systems, small-scale IoT devices remain overlooked. Battery-powered
@@ -103,7 +143,7 @@
               use-cases.
             </p>
 
-            <h3>1.2 State of the Art & Its Limitations</h3>
+            <h3 id="state-of-art-limitations">1.2 State of the Art & Its Limitations</h3>
             <p>
               Current carbon-aware research is focused around data-center energy considerations.
               Data centers incur large electricity costs and carbon emissions. There are 2 main
@@ -135,7 +175,7 @@
               limited bandwitdh and very small battery capacity (energy storage).
             </p>
 
-            <h3>1.3 Novelty & Rationale</h3>
+            <h3 id="novelty-rationale">1.3 Novelty & Rationale</h3>
             <p>
               Our approach relies on imitating an Oracle controller. This Oracle controller can see
               into the future and has full knowledge of the carbon timeseries before it occurs.
@@ -158,14 +198,14 @@
               >), which are well-studied and have multiple proven solutions.
             </p>
 
-            <h3>1.4 Potential Impact</h3>
+            <h3 id="potential-impact">1.4 Potential Impact</h3>
             <p>
               This system could easily be extended to other battery-powered devices that make
               decisions. Any system with a form of energy storage and energy input can take
               advantage of our models to create their own controllers that balance clean energy.
             </p>
 
-            <h3>1.5 Challenges</h3>
+            <h3 id="challenges">1.5 Challenges</h3>
             <p>
               Implementing an energy-aware decision-making controller for battery-powered edge
               devices presents several challenges. The primary difficulty is solving and generating
@@ -191,7 +231,7 @@
               </li>
             </ul>
 
-            <h3>1.6 Metrics of Success</h3>
+            <h3 id="metrics-success">1.6 Metrics of Success</h3>
             <p>
               We compare our trained Imitation Controller to the Oracle controller over the
               following metrics:
@@ -215,8 +255,11 @@
                 </li>
               </ul>
               <li>
-                Utility - differences in the rewards of the Oracle Controller and the Imitation
-                Controller decisions over each horizon.
+                Utility - differences in the rewards of the Oracle Controller (<a
+                  href="#oracle-controller"
+                  >Section 3.3</a
+                >) and the Imitation Controller (<a href="#custom-controller">Section 3.4</a>)
+                decisions over each horizon.
               </li>
               <li>
                 "Feasibility-Normalized Effective Uptime" - at each timestep \( t \), let \( F_t \)
@@ -233,7 +276,7 @@
           <section id="related-work" class="section">
             <h2>2. Related Work</h2>
 
-            <h3>2.1 Carbon-Aware Computing in Large-Scale Systems</h3>
+            <h3 id="carbon-aware-large-scale">2.1 Carbon-Aware Computing in Large-Scale Systems</h3>
             <p>
               <strong>Carbon- and Precedence-Aware Scheduling for Data Processing Clusters</strong
               ><sup id="cite-ref-2"><a href="#cite-note-2">[2]</a></sup> developed scheduling
@@ -253,7 +296,7 @@
               individual IoT devices.
             </p>
 
-            <h3>2.2 Planning and Control Methods</h3>
+            <h3 id="planning-control-methods">2.2 Planning and Control Methods</h3>
             <p>
               <strong>Data-driven Planning via Imitation Learning</strong
               ><sup id="cite-ref-4"><a href="#cite-note-4">[4]</a></sup> introduced a framework for
@@ -263,7 +306,7 @@
               planning, and doesn't specifically address planning based on carbon-emissions.
             </p>
 
-            <h3>Other Related Works</h3>
+            <h3 id="other-related-works">Other Related Works</h3>
             <p>
               Other works in Section VI are not as directly related to this problem as the other
               papers above are, but still give valuable insight into applications of POMDPs.
@@ -285,7 +328,7 @@
             </ul>
             <p>💡 Tip: Add images, diagrams, and code snippets. Make your system reproducible.</p>
 
-            <h3>3.1 Model Profiler</h3>
+            <h3 id="model-profiler">3.1 Model Profiler</h3>
 
             <h4>3.1.1 Power and Latency Measurement</h4>
             <p>
@@ -363,7 +406,7 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               between detection accuracy and energy consumption.
             </p>
 
-            <h3>3.2 System Parameters (per Controller)</h3>
+            <h3 id="system-parameters">3.2 System Parameters (per Controller)</h3>
 
             <p>Let the system parameters be:</p>
 
@@ -521,7 +564,7 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
             <p>\[ \pi^* = \arg\max_{\pi} \sum_{t=0}^{T-1} R(s_t, \pi(s_t), s_{t+1}). \]</p>
             <p>This optimization is solved exactly using finite-horizon dynamic programming.</p>
 
-            <h3>3.4 Custom Controller (POMDP, Imitation Learning)</h3>
+            <h3 id="custom-controller">3.4 Custom Controller (POMDP, Imitation Learning)</h3>
 
             <p>
               The custom controller operates without access to the future carbon trajectory
@@ -605,6 +648,37 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               oracle's carbon-aware behavior using only partial observations, without explicit
               forecasting or belief-state estimation.
             </p>
+
+            <h3 id="naive-controller">3.5 Naive Controller</h3>
+            <p>
+              We implement a naive baseline controller with a fixed, myopic policy that ignores
+              carbon intensity and does not optimize over the horizon. The controller operates under
+              the same system dynamics and action space as defined in
+              <a href="#system-parameters">Section&nbsp;3.2</a> &
+              <a href="#oracle-controller">Section&nbsp;3.3</a>.
+            </p>
+
+            <h4>Policy</h4>
+            <p>
+              At each timestep \(t\), the naive controller selects an action \(a_t = (m_t, c_t)\) as
+              follows:
+            </p>
+            <ol>
+              <li>
+                Select the lowest-energy model in \(\mathcal{M}\) that satisfies \((u_{\text{acc}},
+                u_{\text{lat}})\). If sufficient battery energy is available, execute the model
+                without charging.
+              </li>
+              <li>
+                If insufficient battery energy is available to run that model, select the
+                lowest-energy model in \(\mathcal{M}\) regardless of requirements and charge during
+                the interval.
+              </li>
+              <li>
+                If insufficient battery energy is available to execute any model, select no model
+                and charge during the interval.
+              </li>
+            </ol>
 
             <!-- <h3>3.1 System Architecture</h3>
             <p>Include a block diagram or pipeline figure.</p>
@@ -719,7 +793,7 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
           <section id="supplementary-material" class="section">
             <h2>7. Supplementary Material</h2>
 
-            <h3>7.a. Datasets</h3>
+            <h3 id="datasets">7.a. Datasets</h3>
             <p>Describe each dataset:</p>
             <ul>
               <li>Source and URL</li>
@@ -729,7 +803,7 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
             </ul>
             <p>Include your internal dataset if you collected one.</p>
 
-            <h3>7.b. Software</h3>
+            <h3 id="software">7.b. Software</h3>
             <p>List:</p>
             <ul>
               <li>External libraries or models</li>
