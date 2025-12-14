@@ -9,7 +9,7 @@ import sys
 import json
 import numpy as np
 import traceback
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 # Add project root to path for imports
@@ -24,8 +24,9 @@ from simulation.utils.core import ModelType
 class OracleRunner:
     """Execute single Oracle simulation and extract training data"""
 
-    def __init__(self, temp_dir: str = "data/temp"):
+    def __init__(self, temp_dir: str = "data/temp", data_config: Optional[Dict] = None):
         self.temp_dir = temp_dir
+        self.data_config = data_config or {}
         os.makedirs(temp_dir, exist_ok=True)
 
     def run_simulation(self, combination: Dict[str, Any]) -> Dict[str, Any]:
@@ -138,8 +139,8 @@ class OracleRunner:
         # Merge combination parameters
         config["system"].update(combination["battery_config"])
         config["system"]["max_workers"] = combination.get(
-            "max_workers", 90
-        )  # Add max_workers to system
+            "oracle_workers", 10
+        )  # Use oracle_workers from combination
         config["user_requirements"] = combination["user_parameters"]
         config["reward_weights"] = combination["reward_weights"]
 

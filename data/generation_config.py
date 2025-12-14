@@ -96,8 +96,10 @@ class ConfigLoader:
         if not abs(sum(split.values()) - 1.0) < 1e-6:
             raise ValueError("Data split ratios must sum to 1.0")
 
-        if self.config.output["max_workers"] <= 0:
-            raise ValueError("max_workers must be positive")
+        if self.config.output.get("oracle_workers", 10) <= 0:
+            raise ValueError("oracle_workers must be positive")
+        if self.config.output.get("combination_workers", 10) <= 0:
+            raise ValueError("combination_workers must be positive")
 
     def generate_parameter_combinations(self) -> List[Dict[str, Any]]:
         """Generate all parameter combinations using Cartesian product"""
@@ -130,7 +132,7 @@ class ConfigLoader:
                 "battery_config": battery_config.copy(),
                 "date": date,
                 "location": location,
-                "max_workers": self.config.output["max_workers"],
+                "oracle_workers": self.config.output["oracle_workers"],
             }
 
             combinations.append(combination)

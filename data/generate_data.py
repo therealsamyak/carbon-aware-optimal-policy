@@ -17,7 +17,7 @@ from recombine_data import DataRecombiner
 
 def process_combination(args):
     """Process a single combination in a worker process"""
-    combination, temp_dir, i, total = args
+    combination, temp_dir, i, total, data_config = args
 
     print(f"\nProcessing combination {i + 1}/{total}")
     print(
@@ -27,7 +27,7 @@ def process_combination(args):
 
     try:
         # Initialize oracle runner in this worker process
-        oracle_runner = OracleRunner(temp_dir)
+        oracle_runner = OracleRunner(temp_dir, data_config)
 
         # Run simulation
         result = oracle_runner.run_simulation(combination)
@@ -106,17 +106,21 @@ def main():
         print()
 
         # Process all combinations with multiprocessing
-        print("Processing combinations with 10 workers...")
+        print(
+            f"Processing combinations with {config.output['oracle_workers']} workers..."
+        )
         successful_combinations = 0
 
         # Prepare arguments for worker processes
         worker_args = [
-            (combination, temp_dir, i, len(combinations))
+            (combination, temp_dir, i, len(combinations), config)
             for i, combination in enumerate(combinations)
         ]
 
-        # Use ProcessPoolExecutor with 10 workers
-        with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        # Use ProcessPoolExecutor with configurable oracle workers
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=config.output["oracle_workers"]
+        ) as executor:
             # Submit all tasks
             future_to_combination = {
                 executor.submit(process_combination, args): args[0]["combination_id"]
