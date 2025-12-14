@@ -4,7 +4,7 @@
     "task_interval_seconds": 300,
     "horizon_seconds": 86400,
     "charge_rate_mwh_per_second": 0.00001,
-    "battery_discretization_step": 1,
+    "battery_discretization_step": 0.01,
     "nearest_neighbor_k": 3
   },
   "user_requirements": {
