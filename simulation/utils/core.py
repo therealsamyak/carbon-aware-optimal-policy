@@ -99,13 +99,20 @@ class DataLoader:
 
 
 class RewardCalculator:
-    def __init__(self, weights: Dict[str, float], user_req: Dict[str, float]):
+    def __init__(
+        self,
+        weights: Dict[str, float],
+        user_req: Dict[str, float],
+        system_config: Dict[str, float],
+    ):
         self.W = weights["success_weight"]
         self.X = weights["small_miss_weight"]
         self.Y = weights["large_miss_weight"]
         self.Z = weights["carbon_weight"]
         self.accuracy_threshold = user_req["accuracy_threshold"]
         self.latency_threshold = user_req["latency_threshold_seconds"]
+        self.charge_rate = system_config["charge_rate_mwh_per_second"]
+        self.task_interval = system_config["task_interval_seconds"]
 
     def calculate_reward(
         self,
@@ -133,17 +140,23 @@ class RewardCalculator:
         else:
             large_miss = 1
 
-        # Carbon cost
+        # Carbon cost - only charging has carbon cost, battery energy use is carbon-free
         energy_cost = (
             model_profile.energy_per_inference
             if (action.model != ModelType.NO_MODEL and model_profile is not None)
             else 0
         )
-        # Charging cost: charge_rate * 300 seconds * dirty_energy_fraction
+        # Charging cost: charge_rate * task_interval * dirty_energy_fraction
+        # Only charging (external energy) has carbon cost, battery energy use is inherently carbon-free
         charging_cost = (
-            action.charge * 0.00001 * 300 * dirty_energy_fraction
-        )  # charge_rate from config
-        delta_d = energy_cost * dirty_energy_fraction + charging_cost
+            action.charge
+            * self.charge_rate
+            * self.task_interval
+            * dirty_energy_fraction
+        )
+        delta_d = (
+            energy_cost * 0 + charging_cost
+        )  # energy_cost has 0 carbon multiplier, charging_cost already includes dirty_energy_fraction
 
         # Reward calculation
         reward = (
@@ -157,9 +170,12 @@ class RewardCalculator:
 
 
 class TransitionDynamics:
-    def __init__(self, battery_capacity: float, charge_rate: float):
+    def __init__(
+        self, battery_capacity: float, charge_rate: float, task_interval: float
+    ):
         self.battery_capacity = battery_capacity
         self.charge_rate = charge_rate
+        self.task_interval = task_interval
 
     def transition(
         self,
@@ -174,9 +190,7 @@ class TransitionDynamics:
             energy_cost = model_profiles[action.model].energy_per_inference
 
         # Energy gain from charging
-        energy_gain = (
-            action.charge * self.charge_rate * 300
-        )  # 300 seconds per task interval
+        energy_gain = action.charge * self.charge_rate * self.task_interval
 
         # New battery level
         new_battery = state.battery_level + energy_gain - energy_cost

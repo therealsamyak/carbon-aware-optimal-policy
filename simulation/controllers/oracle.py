@@ -35,10 +35,17 @@ def _process_battery_levels_worker(args):
 
     # Recreate necessary objects from serialized data
     transition = TransitionDynamics(
-        config_data["battery_capacity"], config_data["charge_rate"]
+        config_data["battery_capacity"],
+        config_data["charge_rate"],
+        config_data["task_interval"],
     )
     reward_calc = RewardCalculator(
-        config_data["reward_weights"], config_data["user_requirements"]
+        config_data["reward_weights"],
+        config_data["user_requirements"],
+        {
+            "charge_rate_mwh_per_second": config_data["charge_rate"],
+            "task_interval_seconds": config_data.get("task_interval", 300),
+        },
     )
 
     # Convert model profiles back to ModelProfile objects
@@ -112,17 +119,16 @@ class OracleController:
         self.transition = TransitionDynamics(
             config["system"]["battery_capacity_mwh"],
             config["system"]["charge_rate_mwh_per_second"],
+            config["system"]["task_interval_seconds"],
         )
 
         self.reward_calc = RewardCalculator(
-            config["reward_weights"], config["user_requirements"]
+            config["reward_weights"], config["user_requirements"], config["system"]
         )
 
         self.num_timesteps = len(self.carbon_data)
         self.battery_capacity = config["system"]["battery_capacity_mwh"]
-        self.discretization_step = config["system"].get(
-            "battery_discretization_step", 0.01
-        )
+        self.discretization_step = config["system"]["battery_discretization_step"]
 
         # Use continuous battery values with dictionary lookup
         # Value function: V[t][battery_key] = optimal value from state (t, battery_level)
@@ -146,13 +152,13 @@ class OracleController:
         self.feasible_actions_cache = {}
 
         # Load K parameter from config
-        self.k_neighbors = config["system"].get("nearest_neighbor_k", 3)
+        self.k_neighbors = config["system"]["nearest_neighbor_k"]
 
         # Cache for battery key conversions to avoid repeated string operations
         self.battery_key_cache = {}
 
         # Load max_workers from config
-        self.max_workers = config["system"].get("max_workers", 90)
+        self.max_workers = config["system"]["max_workers"]
 
     def _get_optimal_worker_count(self, num_tasks: int) -> int:
         """Calculate optimal worker count based on task count"""
@@ -171,6 +177,7 @@ class OracleController:
         config_data = {
             "battery_capacity": self.battery_capacity,
             "charge_rate": self.config["system"]["charge_rate_mwh_per_second"],
+            "task_interval": self.config["system"]["task_interval_seconds"],
             "reward_weights": self.config["reward_weights"],
             "user_requirements": self.config["user_requirements"],
         }

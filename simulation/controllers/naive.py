@@ -26,10 +26,11 @@ class NaiveController:
         self.transition = TransitionDynamics(
             config["system"]["battery_capacity_mwh"],
             config["system"]["charge_rate_mwh_per_second"],
+            config["system"]["task_interval_seconds"],
         )
 
         self.reward_calc = RewardCalculator(
-            config["reward_weights"], config["user_requirements"]
+            config["reward_weights"], config["user_requirements"], config["system"]
         )
 
         self.num_timesteps = len(self.carbon_data)

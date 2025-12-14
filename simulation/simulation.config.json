@@ -5,7 +5,8 @@
     "horizon_seconds": 86400,
     "charge_rate_mwh_per_second": 0.00001,
     "battery_discretization_step": 0.01,
-    "nearest_neighbor_k": 3
+    "nearest_neighbor_k": 3,
+    "max_workers": 90
   },
   "user_requirements": {
     "accuracy_threshold": 0.9,
