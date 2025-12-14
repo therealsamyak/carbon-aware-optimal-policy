@@ -6,9 +6,9 @@
     "nearest_neighbor_k": 3
   },
   "user_parameters": [
-    { "accuracy_threshold": 0.5, "latency_threshold_seconds": 0.008 },
-    { "accuracy_threshold": 0.8, "latency_threshold_seconds": 0.006 },
-    { "accuracy_threshold": 0.9, "latency_threshold_seconds": 0.01 }
+    { "accuracy_threshold": 0.95, "latency_threshold_seconds": 0.012 },
+    { "accuracy_threshold": 0.925, "latency_threshold_seconds": 0.008 },
+    { "accuracy_threshold": 0.819, "latency_threshold_seconds": 0.006 }
   ],
   "reward_weights": [
     { "success_weight": 10, "small_miss_weight": 5, "large_miss_weight": 8, "carbon_weight": 7 },
