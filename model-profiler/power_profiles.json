@@ -13,7 +13,6 @@
     "total_duration_seconds": 609.3372659683228,
     "avg_inference_time_seconds": 0.00156,
     "accuracy": 0.693,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   },
@@ -31,7 +30,6 @@
     "total_duration_seconds": 615.3593809604645,
     "avg_inference_time_seconds": 0.00266,
     "accuracy": 0.819,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   },
@@ -49,7 +47,6 @@
     "total_duration_seconds": 616.7614493370056,
     "avg_inference_time_seconds": 0.00548,
     "accuracy": 0.9,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   },
@@ -67,7 +64,6 @@
     "total_duration_seconds": 620.028801202774,
     "avg_inference_time_seconds": 0.00654,
     "accuracy": 0.925,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   },
@@ -85,7 +81,6 @@
     "total_duration_seconds": 622.4582288265228,
     "avg_inference_time_seconds": 0.00833,
     "accuracy": 0.935,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   },
@@ -103,7 +98,6 @@
     "total_duration_seconds": 626.9881021976471,
     "avg_inference_time_seconds": 0.0122,
     "accuracy": 0.954,
-    "success_rate": 1.0,
     "outliers_removed": 40,
     "measurement_method": "powermetrics"
   }

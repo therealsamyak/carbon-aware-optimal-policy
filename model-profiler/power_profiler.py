@@ -268,7 +268,6 @@ class PowerProfiler:
         # Run inference benchmark
         start_time = time.time()
         inference_powers = []
-        successful_inferences = 0
 
         self.logger.info(
             f"Starting {iterations} inference iterations for {model_name} v{model_version} on {image_path}"
@@ -280,14 +279,7 @@ class PowerProfiler:
                 return model.run_inference(image_path)
 
             avg_power, samples = self._measure_with_powermetrics(inference_task)
-            # Need to actually run inference to get result
-            success, detections = model.run_inference(image_path)
             inference_powers.append(avg_power)
-
-            if success:
-                successful_inferences += 1
-            else:
-                self.logger.error(f"Inference failed on iteration {i + 1}")
 
             # Progress indicator for each iteration
             self.logger.info(
@@ -345,7 +337,6 @@ class PowerProfiler:
             "iterations": iterations,
             "total_duration_seconds": total_duration,
             "avg_inference_time_seconds": avg_inference_time_seconds,
-            "success_rate": successful_inferences / iterations,
             "outliers_removed": (
                 iterations - len(trimmed_powers) if iterations >= 20 else 0
             ),
