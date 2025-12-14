@@ -290,36 +290,31 @@
             <h4>3.1.1 Power and Latency Measurement</h4>
             <p>
               A Model task is defined as loading an image and running the default classifier
-              function on it. The task involves (implementation in
-              <a
-                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/yolo_model.py"
-                target="_blank"
-                >model-profiler/yolo_model.py</a
-              >):
+              function on it. The task involves:
             </p>
 
-            <pre><code class="language-python">def model_task(model_name, model_version, image_path):
-    import time
-    
-    # Load YOLOv10 model
-    model = YOLO(f"yolov10{model_version.lower()}.pt")
-    
-    # Measure inference time
-    start_time = time.time()
-    
-    # Run inference on image
-    results = model(image_path)
-    
-    end_time = time.time()
-    inference_time = end_time - start_time
-    
-    # Count detections
-    if results and len(results) > 0:
-        detection_count = len(results[0].boxes)
-    else:
-        detection_count = 0
-    
-    return True, detection_count, inference_time</code></pre>
+            <p>
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/power_profiler.py"
+                target="_blank"
+                >model-profiler/power_profiler.py:277</a
+              >
+            </p>
+            <pre><code>start_time ← current_time()
+
+FOR i ← 1 TO iterations DO
+    avg_power ← measure_with_powermetrics(inference_task)
+    append avg_power to inference_powers
+    sleep for 4 seconds
+END FOR
+
+end_time ← current_time()
+total_duration ← end_time - start_time
+
+total_delay_time ← iterations x 4.0
+actual_inference_duration ← total_duration - total_delay_time
+avg_inference_time_seconds ← actual_inference_duration / iterations
+</code></pre>
 
             <p>During this task, the power profiler measures:</p>
             <ul>
@@ -367,6 +362,164 @@
               for each YOLOv10 model version, enabling the controller to make informed tradeoffs
               between detection accuracy and energy consumption.
             </p>
+
+            <h3>3.2 System Parameters (per Controller)</h3>
+
+            <p>Let the system parameters be:</p>
+
+            <p>
+              \[ \Theta = (B_{\max}, r_{\text{chg}}, \Delta, T, \{d_t\}_{t=0}^{T-1}, u_{\text{acc}},
+              u_{\text{lat}}, \mathcal{M}, E(m), W, X, Y, Z) \]
+            </p>
+
+            <p>Where:</p>
+
+            <ul>
+              <li>\(B_{\max}\) (mWh): maximum battery capacity</li>
+              <li>\(\Delta\) (seconds): task interval (e.g., 300s)</li>
+              <li>\(T\) (seconds): horizon length</li>
+              <li>\(d_t \in [0,1]\): dirty energy fraction at timestep \(t\)</li>
+              <li>
+                \(\mathcal{M}\): model profile set, where each profile is \((m_{\text{acc}},
+                m_{\text{lat}})\) with:
+                <ul>
+                  <li>
+                    \(m_{\text{acc}} \in [0,1]\): model accuracy, where \(\text{MAX\_ACC} = \max_{m
+                    \in \mathcal{M}} m_{\text{acc}}\)
+                  </li>
+                  <li>
+                    \(m_{\text{lat}}\) (seconds): model latency, where \(\text{MIN\_LAT} = \min_{m
+                    \in \mathcal{M}} m_{\text{lat}}\)
+                  </li>
+                </ul>
+              </li>
+              <li>
+                \(E(m)\): energy function that maps model \(m\) to its energy consumption in mWh,
+                where \(\text{ENERGY\_MIN} = \min_{m \in \mathcal{M}} E(m)\)
+              </li>
+              <li>
+                \(u = (u_{\text{acc}}, u_{\text{lat}}) \in U = \{(u_{\text{acc}}, u_{\text{lat}})
+                \in \mathbb{R}^2 \mid u_{\text{acc}} &lt; \text{MAX\_ACC}, u_{\text{lat}} &gt;
+                \text{MIN\_LAT}\}\): user requirements, where \(u_{\text{acc}} \in [0,1]\) is the
+                accuracy requirement, and \(u_{\text{lat}}\) (seconds) is the latency requirement
+              </li>
+              <li>\(r_{\text{chg}}\) (mWh/s): battery energy added per second</li>
+              <li>
+                \(W, X, Y, Z > 0\): reward function weights representing user preferences:
+                <ul>
+                  <li>\(W\): weight for successfully meeting requirements</li>
+                  <li>
+                    \(X\): penalty weight for small misses (executed but requirements not met)
+                  </li>
+                  <li>\(Y\): penalty weight for large misses (no execution)</li>
+                  <li>\(Z\): penalty weight for carbon cost</li>
+                </ul>
+              </li>
+            </ul>
+
+            <b
+              >To simplify this problem, we assume that ALL these parameters are constant per
+              controller. If any of these parameters change, the controller will need to be solved
+              and retrained again.</b
+            >
+
+            <h3>3.3 Oracle Controller</h3>
+            <p>
+              The oracle controller has full knowledge of the future carbon trajectory
+              \(\{d_t\}_{t=0}^{T-1}\) over the planning horizon.
+            </p>
+
+            <h4>State Space</h4>
+            <p>
+              \[ {s} = (t, B_t) \in \mathcal{S} = \{(t, B_t) \mid t \in \{0,\ldots,T-1\},\; B_t \in
+              [0, B_{\max}]\} \]
+            </p>
+            <p>
+              Where \(t\) denotes the current timestep index and \(B_t\) (mWh) denotes the current
+              battery level.
+            </p>
+            <p>
+              This state representation is minimal: it includes exactly the variables that affect
+              future feasibility and decision-making. In particular, the oracle's knowledge of the
+              carbon trajectory is encoded implicitly through the timestep index \(t\), as the dirty
+              energy fraction \(d_t\) is a known exogenous function of time.
+            </p>
+
+            <h4>Action Space</h4>
+            <p>
+              \[ a_t = (m_t, c_t) \in \mathcal{A} = (\mathcal{M} \cup \{\varnothing\}) \times
+              \{0,1\} \]
+            </p>
+            <p>
+              Each action is \(a_t = (m_t, c_t)\), where \(m_t\) is the model selected for execution
+              (or \(\varnothing\) if no model is executed), and \(c_t\) indicates whether the system
+              charges during the current task interval.
+            </p>
+
+            <h4>Transition Probability</h4>
+            <p>
+              Given state \(s_t = (t, B_t)\) and action \(a_t = (m_t, c_t)\), the transition
+              probability to successor state \(s_{t+1} = (t', B')\) is defined as:
+            </p>
+            <p>
+              \[ P(s_{t+1} \mid s_t, a_t) = \begin{cases} 1 & \text{if } t' = t + 1, B_t + c_t \cdot
+              r_{\text{chg}} \ge E(m_t), B' = \min\!\left(B_{\max},\, B_t + c_t \cdot r_{\text{chg}}
+              - E(m_t)\right)\\[6pt] 0 & \text{otherwise.} \end{cases} \]
+            </p>
+            <p>
+              Thus, all feasible actions induce a deterministic transition with probability one,
+              while actions that would result in negative battery energy are assigned zero
+              probability and are therefore infeasible.
+            </p>
+
+            <h4>Reward Function</h4>
+            <p>
+              At each timestep, the environment produces outcome indicators based on the chosen
+              action:
+            </p>
+            <ul>
+              <li>
+                \( \text{success}_t = \mathbf{1}\{m_t \neq \varnothing \wedge \text{acc}(m_t) \ge
+                u_{\text{acc}} \wedge \text{lat}(m_t) \le u_{\text{lat}}\} \)
+              </li>
+              <li>
+                \( \text{small\_miss}_t = \mathbf{1}\{m_t \neq \varnothing \wedge (\text{acc}(m_t) <
+                u_{\text{acc}} \vee \text{lat}(m_t) > u_{\text{lat}})\} \)
+              </li>
+              <li>\( \text{large\_miss}_t = \mathbf{1}\{m_t = \varnothing\} \)</li>
+            </ul>
+            <p>The dirty energy incurred at timestep \(t\) is:</p>
+            <p>\[ \Delta D_t = (E(m_t) + c_t \cdot r_{\text{chg}})\cdot d_t. \]</p>
+            <p>The immediate reward is defined as:</p>
+            <p>
+              \[ R(s_t,a_t,s_{t+1}) = W \cdot \text{success}_t - X \cdot \text{small\_miss}_t - Y
+              \cdot \text{large\_miss}_t - Z \cdot \Delta D_t. \]
+            </p>
+            <p>
+              The optimization objective is to maximize the <em>cumulative</em> reward over the
+              planning horizon. As a result, the total contribution of successes, misses, and carbon
+              cost depends only on their aggregate counts and total dirty energy consumed, not on
+              the specific timesteps at which they occur. In particular, for fixed carbon intensity,
+              a success followed by a miss yields the same cumulative reward as a miss followed by a
+              success, and the timing of a success within the horizon does not affect its
+              contribution as long as feasibility is maintained.
+            </p>
+            <p>
+              Importantly, cumulative quantities such as total successes, misses, or dirty energy
+              consumed are <em>not</em> included in the state. These quantities enter the objective
+              exclusively through the cumulative sum of per-step rewards and do not influence future
+              system dynamics or feasibility. Because carbon cost is modeled as a soft penalty and
+              does not constrain future actions, histories that reach the same state \((t,B_t)\)
+              differ only by an additive constant in accumulated reward. Consequently, the optimal
+              continuation from a given state depends solely on the remaining horizon and current
+              battery level, preserving the Markov property without explicitly storing historical
+              metrics in the state.
+            </p>
+
+            <h4>Objective</h4>
+            <p>The oracle policy \(\pi^*\) maximizes the cumulative reward over the horizon:</p>
+            <p>\[ \pi^* = \arg\max_{\pi} \sum_{t=0}^{T-1} R(s_t, \pi(s_t), s_{t+1}). \]</p>
+            <p>This optimization is solved exactly using finite-horizon dynamic programming.</p>
 
             <!-- <h3>3.1 System Architecture</h3>
             <p>Include a block diagram or pipeline figure.</p>
@@ -450,7 +603,7 @@
               Workload Management in Data Centers: A Multi-Energy Integration Approach. In
               Proceedings of 16th ACM International Conference on Future and Sustainable Energy
               Systems (E-Energy '25), Association for Computing Machinery, New York, NY, USA,
-              907–914.
+              907-914.
               <a href="https://doi.org/10.1145/3679240.3735104" target="_blank">[Paper]</a>
             </p>
 
