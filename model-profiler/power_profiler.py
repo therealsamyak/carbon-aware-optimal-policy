@@ -6,6 +6,8 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Dict, List, Tuple
+import threading
+from yolo_model import YOLOModel
 
 from dotenv import load_dotenv
 
@@ -97,8 +99,6 @@ class PowerProfiler:
         self, func, *args, **kwargs
     ) -> Tuple[float, List[Tuple[float, str]]]:
         """Measure power consumption during function execution using powermetrics."""
-        import threading
-        import time
 
         power_samples = []
         sampling = True
@@ -237,7 +237,6 @@ class PowerProfiler:
         Returns:
             Dictionary with power profiling results
         """
-        from yolo_model import YOLOModel
 
         self.logger.info(
             f"Benchmarking {model_name} v{model_version} power consumption"

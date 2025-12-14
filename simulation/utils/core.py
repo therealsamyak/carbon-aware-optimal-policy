@@ -4,6 +4,7 @@ import pandas as pd
 from typing import Dict, List
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime
 
 
 class ModelType(Enum):
@@ -235,8 +236,6 @@ def validate_config(config: Dict) -> None:
     # Validate date format
     sim = config["simulation"]
     try:
-        from datetime import datetime
-
         datetime.strptime(sim["start_date"], "%Y-%m-%d")
         datetime.strptime(sim["start_time"], "%H:%M:%S")
     except (KeyError, ValueError) as e:

@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple
 
 from controllers.oracle import OracleController
 from controllers.naive import NaiveController
-from utils.core import State, Action
+from utils.core import State, Action, validate_config
 
 
 def load_config() -> Dict:
@@ -61,8 +61,6 @@ def main():
     config = load_config()
 
     # Validate configuration
-    from utils.core import validate_config
-
     validate_config(config)
 
     print("Initializing controllers...")
