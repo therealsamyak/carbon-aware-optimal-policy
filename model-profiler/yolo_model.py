@@ -20,7 +20,7 @@ class YOLOModel:
     def _load_model_specs(self) -> Dict[str, float]:
         """Load model specifications from model-data CSV."""
         try:
-            df = pd.read_csv("model-data/model-data.csv")
+            df = pd.read_csv("model-profiler/model-data.csv")
             model_row = df[
                 (df["model"] == self.model_name) & (df["version"] == self.model_version)
             ]

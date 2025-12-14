@@ -58,8 +58,3 @@ def setup_logging(log_level=logging.DEBUG):
     logger.info("=" * 80)
 
     return logger
-
-
-def get_logger(name):
-    """Get a logger instance with the specified name."""
-    return logging.getLogger(name)
