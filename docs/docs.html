@@ -49,7 +49,7 @@
       <main class="main-content">
         <div class="content-wrapper">
           <h1>Documentation</h1>
-          <p>Complete reference for CLI usage and implementation details</p>
+          <p>Complete reference for CLI usage and implementation details.</p>
 
           <!-- Model Profiler Section -->
           <section id="model-profiler" class="section">
@@ -73,13 +73,24 @@
             <pre><code class="language-bash">python3 model-profiler/benchmark_power.py</code></pre>
 
             <p>
-              Change line 40 of
+              Change the iterations value in
               <a
-                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/benchmark_power.py"
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/model.config.json"
                 target="_blank"
-                >model-profiler/benchmark_power.py</a
+                >model-profiler/model.config.json</a
               >
               to modify number of iterations.
+            </p>
+
+            <p>
+              Change the iter_sleep_sec value in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/model-profiler/model.config.json"
+                target="_blank"
+                >model-profiler/model.config.json</a
+              >
+              to modify sleep time between iterations. This time is subtracted
+              out of calculations and is only used for throttling.
             </p>
 
             <h3>Accuracy</h3>
@@ -102,6 +113,24 @@
                 >their official documentation</a
               >. This scaling more accurately translates the values to
               percentages.
+            </p>
+
+            <h3>Visualization</h3>
+
+            <p>
+              Generate an accuracy vs latency graph based on the model profiles.
+              Run it with
+            </p>
+
+            <pre><code class="language-bash">python3 results/model_results.py</code></pre>
+
+            <p>
+              The graph is saved to
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/results/graphs/model_results.png"
+                target="_blank"
+                >results/graphs/model_results.png</a
+              >.
             </p>
           </section>
         </div>
