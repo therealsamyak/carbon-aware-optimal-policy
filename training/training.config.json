@@ -1,0 +1,27 @@
+{
+  "training_mode": "per_controller",
+  "data_directory": "data/training_data/",
+  "training": {
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "epochs": 100,
+    "loss_function": "cross_entropy",
+    "optimizer": "Adam",
+    "early_stopping": {
+      "enabled": true,
+      "patience": 10,
+      "min_delta": 0.001
+    }
+  },
+  "data": {
+    "train_data_path": "data/training_data/train.npy",
+    "val_data_path": "data/training_data/val.npy",
+    "test_data_path": "data/training_data/test.npy",
+    "train_actions_path": "data/training_data/train_actions.npy",
+    "val_actions_path": "data/training_data/val_actions.npy",
+    "test_actions_path": "data/training_data/test_actions.npy"
+  },
+  "paths": {
+    "model_save_path": "training/models/best_model.pth"
+  }
+}
