@@ -15,6 +15,7 @@ import re
 import sys
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
+from multiprocessing import Pool, cpu_count
 
 # Add project root to path for absolute imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -181,84 +182,95 @@ def calculate_uptime_metric(
     return sum(uptime_scores) / len(uptime_scores)
 
 
+def worker_run_batch(args: Tuple[Dict[str, str], str, str]) -> Dict[str, Any] | None:
+    """Worker function for multiprocessing: run single model against all controllers."""
+    model_info, test_date, batch_results_dir = args
+    return run_single_batch(model_info, test_date, batch_results_dir)
+
+
 def run_single_batch(
     model_info: Dict[str, str], test_date: str, batch_results_dir: str
-) -> Dict[str, Any]:
+) -> Dict[str, Any] | None:
     """Run single model against all controllers for one test date."""
-    print(f"\n=== Running {model_info['filename'][:50]}... on {test_date} ===")
+    try:
+        print(f"\n=== Running {model_info['filename'][:50]}... on {test_date} ===")
 
-    # Create config for this model and test date
-    config = create_config_for_model(model_info["params"], test_date)  # type: ignore
+        # Create config for this model and test date
+        config = create_config_for_model(model_info["params"], test_date)  # type: ignore
 
-    # Validate configuration
-    validate_config(config)
+        # Validate configuration
+        validate_config(config)
 
-    # Initialize controllers
-    oracle = OracleController(config)
-    naive = NaiveController(config)
-    ml = MLController(config, model_path=model_info["path"])
+        # Initialize controllers
+        oracle = OracleController(config)
+        naive = NaiveController(config)
+        ml = MLController(config, model_path=model_info["path"])
 
-    # Run simulations
-    print("  Running Oracle Controller...")
-    oracle_path = oracle.solve()
-    oracle_reward = oracle._calculate_path_reward(oracle_path)
+        # Run simulations
+        print("  Running Oracle Controller...")
+        oracle_path = oracle.solve()
+        oracle_reward = oracle._calculate_path_reward(oracle_path)
 
-    print("  Running Naive Controller...")
-    naive_path = naive.run()
-    naive_reward = naive._calculate_path_reward(naive_path)
+        print("  Running Naive Controller...")
+        naive_path = naive.run()
+        naive_reward = naive._calculate_path_reward(naive_path)
 
-    print("  Running ML Controller...")
-    ml_path = ml.run()
-    ml_reward = ml._calculate_path_reward(ml_path)
+        print("  Running ML Controller...")
+        ml_path = ml.run()
+        ml_reward = ml._calculate_path_reward(ml_path)
 
-    # Calculate metrics for all controllers
-    model_profiles = ml.model_profiles
+        # Calculate metrics for all controllers
+        model_profiles = ml.model_profiles
 
-    results = {
-        "model_filename": model_info["filename"],
-        "test_date": test_date,
-        "config": config,
-        "timestamp": datetime.now().isoformat(),
-        "controllers": {},
-    }
-
-    for controller_name, path, reward in [
-        ("oracle", oracle_path, oracle_reward),
-        ("naive", naive_path, naive_reward),
-        ("ml", ml_path, ml_reward),
-    ]:
-        print(f"  Calculating metrics for {controller_name}...")
-
-        success_metrics = calculate_success_metrics(path, config, model_profiles)
-        uptime_metric = calculate_uptime_metric(path, config, model_profiles)
-
-        results["controllers"][controller_name] = {
-            "total_reward": reward,
-            "path_length": len(path),
-            "success_metrics": success_metrics,
-            "uptime_metric": uptime_metric,
-            "actions": [
-                {
-                    "timestep": i,
-                    "model": action.model.value,
-                    "charge": action.charge,
-                    "battery_level": round(state.battery_level, 7),
-                }
-                for i, (state, action) in enumerate(path)
-            ],
+        results = {
+            "model_filename": model_info["filename"],
+            "test_date": test_date,
+            "config": config,
+            "timestamp": datetime.now().isoformat(),
+            "controllers": {},
         }
 
-    # Save individual results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_params = sanitize_filename_string(model_info["filename"][:30])
-    filename = f"model_{safe_params}_{test_date}_{timestamp}.json"
-    filepath = os.path.join(batch_results_dir, filename)
+        for controller_name, path, reward in [
+            ("oracle", oracle_path, oracle_reward),
+            ("naive", naive_path, naive_reward),
+            ("ml", ml_path, ml_reward),
+        ]:
+            print(f"  Calculating metrics for {controller_name}...")
 
-    with open(filepath, "w") as f:
-        json.dump(results, f, indent=2)
+            success_metrics = calculate_success_metrics(path, config, model_profiles)
+            uptime_metric = calculate_uptime_metric(path, config, model_profiles)
 
-    print(f"  Saved: {filename}")
-    return results
+            results["controllers"][controller_name] = {
+                "total_reward": reward,
+                "path_length": len(path),
+                "success_metrics": success_metrics,
+                "uptime_metric": uptime_metric,
+                "actions": [
+                    {
+                        "timestep": i,
+                        "model": action.model.value,
+                        "charge": action.charge,
+                        "battery_level": round(state.battery_level, 7),
+                    }
+                    for i, (state, action) in enumerate(path)
+                ],
+            }
+
+        # Save individual results
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_params = sanitize_filename_string(model_info["filename"][:30])
+        filename = f"model_{safe_params}_{test_date}_{timestamp}.json"
+        filepath = os.path.join(batch_results_dir, filename)
+
+        with open(filepath, "w") as f:
+            json.dump(results, f, indent=2)
+
+        print(f"  Saved: {filename}")
+        return results
+
+    except Exception as e:
+        print(f"✗ Failed: {model_info['filename'][:30]} on {test_date}: {e}")
+        return None
 
 
 def sanitize_filename_string(s: str) -> str:
@@ -395,24 +407,32 @@ def main():
     # Track all results
     all_results = []
     total_runs = len(model_files) * len(test_dates)
-    current_run = 0
 
     print(f"\nStarting {total_runs} total runs...")
     print("Each run processes 3 controllers (Oracle, Naive, ML)")
 
-    # Execute batch runs
+    # Prepare arguments for multiprocessing
+    batch_args = []
     for model_info in model_files:
         for test_date in test_dates:
-            current_run += 1
-            print(f"\n--- Progress: {current_run}/{total_runs} ---")
+            batch_args.append((model_info, test_date, batch_results_dir))
 
-            try:
-                result = run_single_batch(model_info, test_date, batch_results_dir)
-                all_results.append(result)
-                print(f"✓ Completed: {model_info['filename'][:30]} on {test_date}")
-            except Exception as e:
-                print(f"✗ Failed: {model_info['filename'][:30]} on {test_date}: {e}")
-                continue
+    # Execute batch runs in parallel
+    num_processes = min(cpu_count(), len(batch_args))
+    print(f"\nUsing {num_processes} processes for {total_runs} runs...")
+
+    with Pool(processes=num_processes) as pool:
+        results = pool.map(worker_run_batch, batch_args)
+
+    for i, result in enumerate(results):
+        model_info = batch_args[i][0]
+        test_date = batch_args[i][1]
+
+        if result is not None:
+            all_results.append(result)
+            print(f"✓ Completed: {model_info['filename'][:30]} on {test_date}")
+        else:
+            print(f"✗ Failed: {model_info['filename'][:30]} on {test_date}")
 
     # Generate summary and graph data
     print("\n=== Batch Complete ===")

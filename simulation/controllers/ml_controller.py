@@ -161,13 +161,8 @@ class MLController:
 
             # Ensure action is feasible
             if not self.transition.is_feasible(state, action, self.model_profiles):
-                # Fallback: try to find a feasible action
-                feasible_action = self._find_feasible_fallback(state)
-                action = (
-                    feasible_action
-                    if feasible_action
-                    else Action(model=ModelType.NO_MODEL, charge=False)
-                )
+                # fallback to "error"
+                action = Action(model=ModelType.NO_MODEL, charge=False)
 
             path.append((state, action))
 
@@ -176,41 +171,6 @@ class MLController:
             current_battery = next_state.battery_level
 
         return path
-
-    def _find_feasible_fallback(self, state: State) -> Action:
-        """Find a feasible fallback action when ML prediction is invalid."""
-        # Try to run the lowest energy model that meets requirements
-        accuracy_threshold = self.config["user_requirements"]["accuracy_threshold"]
-        latency_threshold = self.config["user_requirements"][
-            "latency_threshold_seconds"
-        ]
-
-        candidates = []
-        for model_type, profile in self.model_profiles.items():
-            if (
-                profile.accuracy >= accuracy_threshold
-                and profile.latency <= latency_threshold
-                and state.battery_level >= profile.energy_per_inference
-            ):
-                candidates.append((model_type, profile.energy_per_inference))
-
-        if candidates:
-            candidates.sort(key=lambda x: x[1])
-            return Action(model=candidates[0][0], charge=False)
-
-        # Fallback to lowest energy model without charging
-        all_candidates = [
-            (model_type, profile.energy_per_inference)
-            for model_type, profile in self.model_profiles.items()
-            if state.battery_level >= profile.energy_per_inference
-        ]
-
-        if all_candidates:
-            all_candidates.sort(key=lambda x: x[1])
-            return Action(model=all_candidates[0][0], charge=False)
-
-        # Last resort: charge without model
-        return Action(model=ModelType.NO_MODEL, charge=True)
 
     def _calculate_path_reward(self, path: List[Tuple[State, Action]]) -> float:
         """Calculate total reward for the path."""
