@@ -1,0 +1,758 @@
+{
+  "generation_timestamp": "2025-12-14T15:00:10.045003",
+  "total_samples": 866,
+  "observation_features": 3,
+  "action_features": 2,
+  "data_split": {
+    "train": 606,
+    "val": 86,
+    "test": 174
+  },
+  "statistics": {
+    "observations": {
+      "battery_level": {
+        "min": 0.0010169099550694227,
+        "max": 1.0,
+        "mean": 0.34434980154037476,
+        "std": 0.33469823002815247
+      },
+      "carbon_intensity": {
+        "min": 0.3312000036239624,
+        "max": 0.8043000102043152,
+        "mean": 0.5004770159721375,
+        "std": 0.1334688514471054
+      },
+      "carbon_change": {
+        "min": -0.07900000363588333,
+        "max": 0.07400000095367432,
+        "mean": 9.515009878668934e-5,
+        "std": 0.006483485456556082
+      }
+    },
+    "actions": {
+      "model_type_distribution": {
+        "0": 592,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 274
+      },
+      "charge_distribution": {
+        "no_charge": 692,
+        "charge": 174
+      }
+    },
+    "simulation": {
+      "total_combinations": 4,
+      "reward_stats": {
+        "min": -13.0,
+        "max": 1241.6212324000005,
+        "mean": 1238.6338220194
+      }
+    }
+  },
+  "sample_metadata": [
+    {
+      "combination_id": 0,
+      "total_reward": -13.0,
+      "optimal_value": -5.0,
+      "execution_time": 0.579359,
+      "chunk_file": "chunk_000.npz"
+    },
+    {
+      "combination_id": 0,
+      "total_reward": -13.0,
+      "optimal_value": -5.0,
+      "execution_time": 0.579359,
+      "chunk_file": "chunk_000.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    },
+    {
+      "combination_id": 1,
+      "total_reward": 1241.394865400001,
+      "optimal_value": 10.0,
+      "execution_time": 888.908654,
+      "chunk_file": "chunk_001.npz"
+    }
+  ]
+}
