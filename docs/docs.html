@@ -35,7 +35,11 @@
       <aside class="sidebar">
         <h2>Table of Contents</h2>
         <ul class="toc-links">
+          <li><a href="#setup">Setup</a></li>
           <li><a href="#model-profiler">Model Profiler</a></li>
+          <li><a href="#training-data-generation">Training Data Generation</a></li>
+          <li><a href="#ml-training">ML Training</a></li>
+          <li><a href="#simulation-framework">Simulation Framework</a></li>
         </ul>
 
         <div class="footer-info">
@@ -48,6 +52,20 @@
         <div class="content-wrapper">
           <h1>Documentation</h1>
           <p>Complete reference for CLI usage and implementation details.</p>
+
+          <!-- Setup Section -->
+          <section id="setup" class="section">
+            <h2>Setup</h2>
+            <p>Set up development environment for the Optimal Charge Security Camera project.</p>
+
+            <h3>Environment Setup</h3>
+            <p>Create a virtual environment and install dependencies:</p>
+            <pre><code class="language-bash">python3 -m venv venv
+source venv/bin/activate
+pip install .</code></pre>
+
+            <p>This installs all required dependencies from pyproject.toml.</p>
+          </section>
 
           <!-- Model Profiler Section -->
           <section id="model-profiler" class="section">
@@ -123,6 +141,113 @@
                 target="_blank"
                 >results/graphs/model_results.png</a
               >.
+            </p>
+          </section>
+
+          <!-- Training Data Generation Section -->
+          <section id="training-data-generation" class="section">
+            <h2>Training Data Generation</h2>
+            <p>
+              Generate comprehensive training datasets using Oracle optimal solutions across
+              parameter combinations.
+            </p>
+
+            <h3>Data Generation Workflow</h3>
+
+            <p>
+              The training data generation pipeline creates datasets by running Oracle simulations
+              for all parameter combinations defined in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/data/data.config.json"
+                target="_blank"
+                >data/data.config.json</a
+              >.
+            </p>
+
+            <pre><code class="language-bash">python data/generate_data.py</code></pre>
+
+            <p>Key configuration parameters in data/data.config.json:</p>
+            <ul>
+              <li>User parameters: Accuracy/latency thresholds, reward weights</li>
+              <li>Battery configurations: Capacity and charge rates</li>
+              <li>Seasonal dates: Representative dates for different seasons</li>
+              <li>Output settings: Data splits, worker counts, chunk sizes</li>
+            </ul>
+
+            <p>
+              Output: Training datasets saved to data/training_data/ with train/val/test splits.
+            </p>
+          </section>
+
+          <!-- ML Training Section -->
+          <section id="ml-training" class="section">
+            <h2>ML Training</h2>
+            <p>
+              Train neural network controllers using imitation learning from Oracle demonstrations.
+            </p>
+
+            <h3>Controller Training</h3>
+
+            <p>
+              Train 3-layer policy networks for joint model selection and charging decisions. Two
+              training modes available:
+            </p>
+
+            <pre><code class="language-bash">uv run python training/train.py</code></pre>
+
+            <p>
+              Key configuration via
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/training/training.config.json"
+                target="_blank"
+                >training/training.config.json</a
+              >:
+            </p>
+            <ul>
+              <li>Training mode: "generic" or "per_controller"</li>
+              <li>Hyperparameters: Learning rate, batch size, epochs</li>
+              <li>Data paths: Training/validation/test dataset locations</li>
+              <li>Model paths: Where to save trained models</li>
+            </ul>
+
+            <p>Output: Trained models saved to training/models/ with parameter-specific naming.</p>
+          </section>
+
+          <!-- Simulation Framework Section -->
+          <section id="simulation-framework" class="section">
+            <h2>Simulation Framework</h2>
+            <p>Compare Oracle, Naive, and ML controller performance under various scenarios.</p>
+
+            <h3>Single Simulation</h3>
+
+            <p>Run single comparison of all three controllers using current configuration:</p>
+
+            <pre><code class="language-bash">python simulation/run.py</code></pre>
+
+            <h3>Batch Evaluation</h3>
+
+            <p>Run comprehensive evaluation across all trained models and seasonal test dates:</p>
+
+            <pre><code class="language-bash">python simulation/batch_run.py</code></pre>
+
+            <p>
+              Key configuration via
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/simulation.config.json"
+                target="_blank"
+                >simulation/simulation.config.json</a
+              >:
+            </p>
+            <ul>
+              <li>System settings: Battery capacity, charge rate, task intervals</li>
+              <li>User requirements: Accuracy/latency thresholds</li>
+              <li>Reward weights: Success/miss/carbon scoring parameters</li>
+              <li>Data paths: Model profiles and energy data locations</li>
+            </ul>
+
+            <p>
+              Output: Simulation results saved to simulation/simulation_data/ with comprehensive
+              metrics and graph data.
             </p>
           </section>
         </div>
