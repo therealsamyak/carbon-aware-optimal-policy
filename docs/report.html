@@ -250,7 +250,7 @@
 
             <h3 id="metrics-success">1.6 Metrics of Success</h3>
             <p>
-              We compare our trained Imitation Controller to the Oracle controller over the
+              We compare our trained Imitation (Custom) Controller to the Oracle controller over the
               following metrics:
             </p>
             <ul>
@@ -275,9 +275,9 @@
                 Utility - differences in the rewards of the Oracle Controller (<a
                   href="#oracle-controller"
                   >Section 3.3</a
-                >), the Imitation Controller (<a href="#custom-controller">Section 3.4</a>), and
-                Naive Controller (<a href="#naive-controller">Section 3.5</a>) decisions over each
-                horizon.
+                >), the Imitation (Custom) Controller (<a href="#custom-controller">Section 3.4</a
+                >), and Naive Controller (<a href="#naive-controller">Section 3.5</a>) decisions
+                over each horizon.
               </li>
               <li>
                 "Feasibility-Normalized Effective Uptime" - at each timestep \( t \), let \( F_t \)
@@ -695,26 +695,92 @@ END FOR
 
             <h4>Policy Learning via Imitation</h4>
 
-            <h4 id="oracle-data-generation-methodology">Oracle Data Generation Methodology</h4>
             <p>
-              We generate training data through a systematic parameter sweep across multiple system
-              dimensions to ensure comprehensive coverage of the operational space. For each unique
-              controller configuration, we run the oracle controller with full future carbon
-              knowledge to generate optimal demonstration trajectories using dynamic programming.
+              Rather than attempting to solve the POMDP via belief-state planning, we learn the
+              custom controller via imitation learning using the oracle policy \(\pi^*\) (<a
+                href="#oracle-controller"
+                >Section 3.3</a
+              >) as an expert.
             </p>
+
+            <b
+              >To simplify this problem, we assume that ALL system parameters in
+              <a href="#system-parameters">Section 3.2</a> are constant per controller. If any of
+              these parameters change, the controller will need to be solved and retrained again.
+              See <a href="#limitations">Section 5.3</a> for more information.</b
+            >
+
+            <h4 id="training-data-generation">Training Data Generation</h4>
             <p>
-              Each demonstration trajectory takes the form \(\tau =
-              (o_0,a_0^*,\ldots,o_{T-1},a_{T-1}^*)\), where \(a_t^* = \pi^*(s_t)\) represents the
-              oracle's optimal action and \(o_t\) is the observation available to the custom
-              controller at timestep \(t\). These trajectories collectively define the imitation
-              learning dataset \(\mathcal{D} = \{(o_t,a_t^*)\}\).
+              To create training data for the custom controller, the oracle solver's optimal
+              decisions must be translated into observation-action pairs that the imitation learning
+              algorithm can learn from. This process extracts the oracle's state-action trajectories
+              and converts them into the observation space that the custom controller will actually
+              encounter at runtime.
             </p>
+
+            <p>The training data generation process works as follows:</p>
+            <pre><code>FOR each optimal trajectory τ FROM oracle solver DO
+    observations ← []
+    actions ← []
+    
+    FOR each timestep t IN τ DO
+        state, action ← τ[t]
+        
+        // Extract carbon information
+        carbon_intensity ← carbon_data[t]  // [0,1]
+        carbon_change ← carbon_data[t] - carbon_data[t-1]  // [-1,1]
+        
+        // Normalize battery level for observation space
+        normalized_battery ← state.battery_level / B_max  // [0,1]
+        
+        // Create observation vector (3D)
+        observation ← [normalized_battery, carbon_intensity, carbon_change]
+        
+        // Encode action as discrete targets
+        model_index ← index_of(action.model)  // 0-6 for YOLOv10 variants
+        charge_decision ← int(action.charge)  // 0 or 1
+        
+        // Append to training dataset
+        observations.append(observation)
+        actions.append([model_index, charge_decision])
+    END FOR
+    
+    // Save as compressed numpy arrays with metadata
+    save_training_chunk(observations, actions, trajectory_metadata)
+END FOR</code></pre>
             <p>
-              We implement rigorous data quality validation and filtering procedures to ensure all
-              demonstrations are feasible and optimal. The final dataset is split into training,
-              validation, and test sets to support model development and evaluation while preventing
-              overfitting.
+              Implementation:
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/data/oracle_runner.py"
+                target="_blank"
+                >data/oracle_runner.py:70</a
+              >
+              and
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/controllers/oracle.py"
+                target="_blank"
+                >simulation/controllers/oracle.py:504</a
+              >
             </p>
+
+            <ul>
+              <li>
+                <strong>Observation Space Translation:</strong> The oracle has full knowledge of the
+                timestep \(t\) and future carbon trajectory, but the custom controller only observes
+                \((B_t, d_t, \Delta d_t)\). The training data generation extracts exactly what the
+                custom controller will see at runtime.
+              </li>
+              <li>
+                <strong>Action Encoding:</strong> Model selection is encoded as discrete indices
+                (0-6) corresponding to YOLOv10 variants, while charging decisions become binary
+                targets (0/1).
+              </li>
+              <li>
+                <strong>Normalization:</strong> Battery levels are normalized to \([0,1]\) to make
+                the neural network training stable across different battery configurations.
+              </li>
+            </ul>
 
             <h4 id="neural-network-architecture-design">Neural Network Architecture Design</h4>
             <p>
