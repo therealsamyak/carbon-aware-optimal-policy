@@ -212,6 +212,19 @@ ol {
   margin-bottom: 15px;
 }
 
+.params-table {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.params-table th,
+.params-table td {
+  width: 25%;
+  text-align: left;
+}
+
 li {
   margin-bottom: 8px;
   color: #495057;
