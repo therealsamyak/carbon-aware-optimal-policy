@@ -76,7 +76,9 @@
                 <a href="#custom-controller">3.4 Custom Controller (POMDP, Imitation Learning)</a>
               </li>
               <li><a href="#naive-controller">3.5 Naive Controller</a></li>
-              <li><a href="#simulation">3.6 Simulation Setup</a></li>
+              <li>
+                <a href="#simulation">3.6 Simulation Setup</a>
+              </li>
             </ul>
           </li>
           <li><a href="#evaluation-results">4. Evaluation & Results</a></li>
@@ -773,20 +775,59 @@ END FOR
 
             <h3 id="simulation">3.6 Simulation Setup</h3>
 
-            <h4>Pipeline</h4>
-            <ol>
-              <li>Pick a day unseen in the training data</li>
-              <li>Loop through all custom controllers:</li>
-              <ul>
-                <li>Extract the system parameters the controller is trained on.</li>
-                <li>Run the controller with those system parameters on the unseen day.</li>
-                <li>
-                  Run the naive and oracle controllers with the same system parameters on the unseen
-                  day.
-                </li>
-              </ul>
-              <li>Aggregate and display results.</li>
-            </ol>
+            <h4>Configuration Management</h4>
+            <p>
+              Each custom controller is trained on a specific set of system parameters and cannot
+              operate outside those constraints without retraining. The simulation loads
+              controller-specific configurations including battery capacity, task intervals, user
+              requirements, and reward weights. All three controllers (oracle, naive, and custom)
+              run with identical system parameters to ensure fair comparison.
+            </p>
+
+            <h4>Main Simulation Loop</h4>
+            <p>
+              For each unseen test day, the simulation runs all three controllers simultaneously
+              using the same carbon intensity trace and initial conditions. Each controller makes
+              decisions at every task interval based on its available information: the oracle has
+              full future carbon knowledge, the naive controller uses only current battery state,
+              and the custom controller uses real-time observations.
+            </p>
+
+            <pre><code>FOR timestep FROM 0 TO horizon_length-1 DO
+    current_state ← (timestep, battery_level)
+    
+    FOR each controller IN controllers DO
+        action ← controller.select_action(current_state)
+        
+        IF action.is_feasible(current_state) THEN
+            next_state ← transition(current_state, action)
+            reward ← calculate_reward(action, next_state)
+            path[controller].add(current_state, action, reward)
+        ELSE
+            handle_infeasible_action(controller, current_state)
+        END IF
+    END FOR
+    
+    update_all_battery_states()
+END FOR</code></pre>
+
+            <h4>Result Aggregation</h4>
+            <p>
+              After completing the simulation horizon, results are aggregated for each controller.
+              Performance metrics include total cumulative reward, success rates, charging patterns,
+              and model usage statistics. The comparison evaluates how well the custom controller
+              approximates oracle performance while respecting real-time constraints.
+            </p>
+
+            <pre><code>FOR each controller IN controllers DO
+    total_reward ← sum(path[controller].rewards)
+    success_rate ← count(path[controller].actions WHERE meets_requirements) / total_actions
+    utility_metrics ← calculate_utility(path[controller])
+    
+    record_performance(controller, total_reward, success_rate, utility_metrics)
+END FOR
+
+generate_comparative_analysis(controllers)</code></pre>
 
             <!-- <h3>3.1 System Architecture</h3>
             <p>Include a block diagram or pipeline figure.</p>
