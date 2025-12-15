@@ -144,6 +144,11 @@
               use-cases.
             </p>
 
+            <p>
+              For a full breakdown of how we restricted the optimization to solve this problem, see
+              Section 3.
+            </p>
+
             <h3 id="state-of-art-limitations">1.2 State of the Art & Its Limitations</h3>
             <p>
               Current carbon-aware research is focused around data-center energy considerations.
@@ -451,12 +456,16 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               <li>
                 \(W, X, Y, Z > 0\): reward function weights representing user preferences:
                 <ul>
-                  <li>\(W\): weight for successfully meeting requirements</li>
+                  <li>\(W\): weight for running a model that successfully meets requirements</li>
                   <li>
-                    \(X\): penalty weight for small misses (executed but requirements not met)
+                    \(X\): penalty weight for "small misses" (selected model successfully executed,
+                    but it did not meet the accuracy or latency requirements)
                   </li>
-                  <li>\(Y\): penalty weight for large misses (no execution)</li>
-                  <li>\(Z\): penalty weight for carbon cost</li>
+                  <li>
+                    \(Y\): penalty weight for "large misses" (no model was selected due to
+                    insufficient battery capacity)
+                  </li>
+                  <li>\(Z\): penalty weight for amount of dirty energy consumed</li>
                 </ul>
               </li>
             </ul>
