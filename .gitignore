@@ -101,5 +101,4 @@ tmp/
 #large models
 *.pt
 
-data/training_data
 data/temp
