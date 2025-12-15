@@ -73,7 +73,9 @@
                   >2.2 Planning and Control Methods</a
                 >
               </li>
-              <li><a href="#other-related-works">Other Related Works</a></li>
+              <li>
+                <a href="#other-related-works">2.3 Other Related Works</a>
+              </li>
             </ul>
           </li>
           <li>
@@ -92,11 +94,17 @@
                 >
               </li>
               <li><a href="#naive-controller">3.5 Naive Controller</a></li>
+              <li><a href="#simulation">3.6 Simulation Setup</a></li>
             </ul>
           </li>
           <li><a href="#evaluation-results">4. Evaluation & Results</a></li>
           <li>
             <a href="#discussion-conclusions">5. Discussion & Conclusions</a>
+            <ul class="toc-sublinks">
+              <li><a href="#worked-well">5.1 What worked well and why?</a></li>
+              <li><a href="#didnt-work">5.2 What didn't work and why?</a></li>
+              <li><a href="#limitations">5.3 Limitations & Future Work</a></li>
+            </ul>
           </li>
           <li><a href="#references">6. References</a></li>
           <li>
@@ -165,6 +173,11 @@
               these factors. The system supports dynamic weights, so if the
               initial weights are not balanced to a specifc use-case, they are
               adjustable for other use-cases.
+            </p>
+
+            <p>
+              For a full breakdown of how we restricted the optimization to
+              solve this problem, see Section 3.
             </p>
 
             <h3 id="state-of-art-limitations">
@@ -357,7 +370,7 @@
               planning based on carbon-emissions.
             </p>
 
-            <h3 id="other-related-works">Other Related Works</h3>
+            <h3 id="other-related-works">2.3 Other Related Works</h3>
             <p>
               Other works in Section VI are not as directly related to this
               problem as the other papers above are, but still give valuable
@@ -385,6 +398,12 @@
             </p>
 
             <h3 id="model-profiler">3.1 Model Profiler</h3>
+
+            To simplify the optimization, we benchmarked and created model
+            profiles separately before our simulation loop. The main simulation
+            loop then uses these pre-computed profiles to make decisions at
+            runtime. We do NOT separately profile during the simulation itself,
+            which is a known limitation. See section 5 for more details.
 
             <h4>3.1.1 Power and Latency Measurement</h4>
             <p>
@@ -530,13 +549,22 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
                 \(W, X, Y, Z > 0\): reward function weights representing user
                 preferences:
                 <ul>
-                  <li>\(W\): weight for successfully meeting requirements</li>
                   <li>
-                    \(X\): penalty weight for small misses (executed but
-                    requirements not met)
+                    \(W\): weight for running a model that successfully meets
+                    requirements
                   </li>
-                  <li>\(Y\): penalty weight for large misses (no execution)</li>
-                  <li>\(Z\): penalty weight for carbon cost</li>
+                  <li>
+                    \(X\): penalty weight for "small misses" (selected model
+                    successfully executed, but it did not meet the accuracy or
+                    latency requirements)
+                  </li>
+                  <li>
+                    \(Y\): penalty weight for "large misses" (no model was
+                    selected due to insufficient battery capacity)
+                  </li>
+                  <li>
+                    \(Z\): penalty weight for amount of dirty energy consumed
+                  </li>
                 </ul>
               </li>
             </ul>
@@ -623,7 +651,12 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
             </ul>
             <p>The dirty energy incurred at timestep \(t\) is:</p>
             <p>
-              \[ \Delta D_t = (E(m_t) + c_t \cdot r_{\text{chg}})\cdot d_t. \]
+              \[ \Delta D_t = c_t \cdot r_{\text{chg}}\cdot \Delta \cdot d_t. \]
+            </p>
+            <p>
+              Where \(c_t\) is the charge decision (0 or 1), \(r_{\text{chg}}\)
+              is the charging rate, \(\Delta\) is the task interval, and \(d_t\)
+              is the percent of energy that is dirty at that time.
             </p>
             <p>The immediate reward is defined as:</p>
             <p>
@@ -643,17 +676,18 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               affect its contribution as long as feasibility is maintained.
             </p>
             <p>
-              Importantly, cumulative quantities such as total successes,
-              misses, or dirty energy consumed are <em>not</em> included in the
-              state. These quantities enter the objective exclusively through
-              the cumulative sum of per-step rewards and do not influence future
-              system dynamics or feasibility. Because carbon cost is modeled as
-              a soft penalty and does not constrain future actions, histories
-              that reach the same state \((t,B_t)\) differ only by an additive
-              constant in accumulated reward. Consequently, the optimal
-              continuation from a given state depends solely on the remaining
-              horizon and current battery level, preserving the Markov property
-              without explicitly storing historical metrics in the state.
+              Cumulative quantities such as total successes, misses, or dirty
+              energy consumed are
+              <em>not</em> included in the state. These quantities are only used
+              to compute the cumulative sum of per-step rewards and do not
+              influence future system dynamics or feasibility. Because carbon
+              cost is modeled as a soft penalty and does not constrain future
+              actions, histories that reach the same state \((t,B_t)\) differ
+              only by an additive constant in accumulated reward. Consequently,
+              the optimal continuation from a given state depends solely on the
+              remaining horizon and current battery level, preserving the Markov
+              property without explicitly storing historical metrics in the
+              state.
             </p>
 
             <h4>Objective</h4>
@@ -694,6 +728,39 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
                 </ul>
               </li>
             </ul>
+
+            <p><strong>Basic DP Algorithm with K-NN:</strong></p>
+            <pre><code>FOR t ← T-1 DOWNTO 0 DO
+    FOR each battery_level b IN reachable_states DO
+        best_value ← -∞
+        best_action ← null
+        
+        FOR each action a IN feasible_actions(b) DO
+            next_state ← transition(t, b, a)
+            reward ← R(t, b, a, next_state)
+            future_value ← V[t+1][knn(battery_key(next_state))]
+            total_value ← reward + future_value
+            
+            IF total_value > best_value THEN
+                best_value ← total_value
+                best_action ← a
+            END IF
+        END FOR
+        
+        V[t][battery_key(b)] ← best_value
+        π[t][battery_key(b)] ← best_action
+    END FOR
+END FOR
+</code></pre>
+
+            <p>
+              The oracle controller implementation can be found in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/controllers/oracle.py"
+                target="_blank"
+                >oracle.py</a
+              >.
+            </p>
 
             <h3 id="custom-controller">
               3.4 Custom Controller (POMDP, Imitation Learning)
@@ -802,9 +869,14 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               We implement a naive baseline controller with a fixed, myopic
               policy that ignores carbon intensity and does not optimize over
               the horizon. The controller operates under the same system
-              dynamics and action space as defined in
-              <a href="#system-parameters">Section&nbsp;3.2</a> &
-              <a href="#oracle-controller">Section&nbsp;3.3</a>.
+              dynamics as defined in
+              <a href="#system-parameters">Section&nbsp;3.2</a>. The naive
+              controller code can be found in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/controllers/naive.py"
+                target="_blank"
+                >naive.py</a
+              >.
             </p>
 
             <h4>Policy</h4>
@@ -827,6 +899,28 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
                 If insufficient battery energy is available to execute any
                 model, select no model and charge during the interval.
               </li>
+            </ol>
+
+            <h3 id="simulation">3.6 Simulation Setup</h3>
+
+            <h4>Pipeline</h4>
+            <ol>
+              <li>Pick a day unseen in the training data</li>
+              <li>Loop through all custom controllers:</li>
+              <ul>
+                <li>
+                  Extract the system parameters the controller is trained on.
+                </li>
+                <li>
+                  Run the controller with those system parameters on the unseen
+                  day.
+                </li>
+                <li>
+                  Run the naive and oracle controllers with the same system
+                  parameters on the unseen day.
+                </li>
+              </ul>
+              <li>Aggregate and display results.</li>
             </ol>
 
             <!-- <h3>3.1 System Architecture</h3>
@@ -868,14 +962,73 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
           <!-- Discussion & Conclusions Section -->
           <section id="discussion-conclusions" class="section">
             <h2>5. Discussion & Conclusions</h2>
+            <p>This should synthesize—not merely repeat—your results.</p>
+
+            <h3 id="worked-well">5.1 What worked well and why?</h3>
+            <br />
+
+            <h3 id="didnt-work">5.2 What didn't work and why?</h3>
+            <br />
+
+            <h3 id="limitations">5.3 Limitations & Future Work</h3>
+
             <p>
-              Synthesize the main insights from your work.<br /><br />
-              <strong>What worked well and why?</strong><br />
-              <strong>What didn't work and why?</strong><br />
-              <strong>What limitations remain?</strong><br />
-              <strong>What would you explore next if you had more time?</strong
-              ><br /><br />
-              This should synthesize—not merely repeat—your results.
+              Due to computational and project time constraints, our simulation
+              engine has the following limitations:
+            </p>
+            <ul>
+              <li>
+                As mentioned in Section 3.2, our custom controller is
+                specifically trained on a set of system parameters. The custom
+                controller does not support varying the system parameters
+                without retraining the controller.
+              </li>
+              <li>
+                As mentioned in Section 3.1, there is no runtime measurement of
+                battery consumption; we only use the model profiles.
+              </li>
+              <li>
+                Idle energy consumed by any controller is not considered. In the
+                real world, there is some idle energy cost, even if its very
+                small due to the controller 'sleeping'.
+              </li>
+              <li>
+                Energy consumed when running the controller-selection algorithm
+                (or running the NN to make decision) is not accounted for.
+              </li>
+            </ul>
+
+            <p>
+              A future simulation engine would consider all these energy
+              consumption measurements, including real-time power modeling.
+            </p>
+
+            <p>
+              Due to our time constraints, we were not able to perform more
+              ablation studies on this controller. The computational cost of
+              solving the MDP, even after the restrictions and trade-offs we
+              made, there was not enough time to do this. There are so many
+              system parameters that tuning a controller for every single
+              combination, especially with the many tasks we were doing, is just
+              not feasible.
+            </p>
+
+            <p>
+              If we had more time to run the oracle on a wider range of system
+              parameters, we could create a massive dataset that can train a
+              controller to recognize the diverse requirements and parameter
+              combinations that are possible. This would give us one general-use
+              controller that is plug-and-play anywhere.
+            </p>
+
+            <p>
+              Future work could incorporate algorithms and methodology from the
+              Data-driven Planning via Imitation Learning paper<sup
+                id="cite-ref-4"
+                ><a href="#cite-note-4">[4]</a></sup
+              >. While our current approach uses basic supervised learning with
+              cross-entropy loss, more sophisticated imitation learning
+              techniques could improve controller performance.
             </p>
           </section>
 
@@ -885,19 +1038,6 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
             <p>
               Provide full citations for all sources (academic papers, websites,
               etc.) referenced and all software and datasets uses.
-            </p>
-
-            <h3 id="cite-note-4">
-              Data-driven Planning via Imitation Learning<cite>[4]</cite>
-            </h3>
-            <p>
-              Choudhury, S., Bhardwaj, M., Arora, S., Kapoor, A., Ranade, G.,
-              Scherer, S., & Dey, D. Data-driven Planning via Imitation
-              Learning. The Robotics Institute, Carnegie Mellon University &
-              Microsoft Research.
-              <a href="https://arxiv.org/abs/2008.09719" target="_blank"
-                >[Paper]</a
-              >
             </p>
 
             <h3 id="cite-note-2">
@@ -924,6 +1064,19 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
               (E-Energy '25), Association for Computing Machinery, New York, NY,
               USA, 907-914.
               <a href="https://doi.org/10.1145/3679240.3735104" target="_blank"
+                >[Paper]</a
+              >
+            </p>
+
+            <h3 id="cite-note-4">
+              Data-driven Planning via Imitation Learning<cite>[4]</cite>
+            </h3>
+            <p>
+              Choudhury, S., Bhardwaj, M., Arora, S., Kapoor, A., Ranade, G.,
+              Scherer, S., & Dey, D. Data-driven Planning via Imitation
+              Learning. The Robotics Institute, Carnegie Mellon University &
+              Microsoft Research.
+              <a href="https://arxiv.org/abs/1711.06391" target="_blank"
                 >[Paper]</a
               >
             </p>
@@ -959,23 +1112,58 @@ avg_inference_time_seconds ← actual_inference_duration / iterations
           <section id="supplementary-material" class="section">
             <h2>7. Supplementary Material</h2>
 
-            <h3 id="datasets">7.a. Datasets</h3>
-            <p>Describe each dataset:</p>
-            <ul>
-              <li>Source and URL</li>
-              <li>Data format</li>
-              <li>Preprocessing steps</li>
-              <li>Labeling/annotation efforts</li>
-            </ul>
-            <p>Include your internal dataset if you collected one.</p>
+            <h3 id="datasets">7.1 Datasets</h3>
+            <p>
+              <strong>Electricity Maps grid carbon traces (external).</strong>
+              2024 time-series CSVs at 5-minute granularity for 4 U.S. regions
+              from
+              <a href="https://www.electricitymaps.com/" target="_blank"
+                >Electricity Maps</a
+              >, stored in energy-data/. We replay these traces in simulation as
+              the time-varying carbon signal. Preprocessing: load CSV, sort by
+              timestamp, select column 7 (Carbon-free energy percentage, CFE%),
+              and align to the simulator timestep (hold the most recent 5-minute
+              value when the task interval is finer). No labeling.
+            </p>
+            <p>
+              <strong>YOLOv10 model metadata (external).</strong> Per-variant
+              accuracy and specs from
+              <a
+                href="https://docs.ultralytics.com/models/yolov10/"
+                target="_blank"
+                >Ultralytics YOLOv10 documentation</a
+              >
+              used to parameterize model trade-offs in the simulator. No
+              labeling.
+            </p>
+            <p>
+              <strong>Power profiling logs (internal).</strong> Our benchmark
+              scripts generate per-model power and latency stats saved as JSON
+              in results/ (for example power_profiles.json) and used to estimate
+              energy-per-inference.
+            </p>
+            <p>
+              <strong>Benchmark images (internal).</strong> Fixed images in
+              benchmark-images/ used only to run consistent inference during
+              profiling and simulation, not to train YOLO.
+            </p>
 
-            <h3 id="software">7.b. Software</h3>
-            <p>List:</p>
-            <ul>
-              <li>External libraries or models</li>
-              <li>Internal modules you wrote</li>
-              <li>Links to repos or documentation</li>
-            </ul>
+            <h3 id="software">7.2 Software</h3>
+            <p>
+              <strong>External libraries:</strong>
+              <a href="https://pytorch.org/" target="_blank">PyTorch</a>,
+              <a href="https://numpy.org/" target="_blank">NumPy</a>,
+              <a href="https://astral.sh/" target="_blank">Astral (uv)</a>.
+            </p>
+            <p>
+              <strong>External models:</strong> Ultralytics YOLOv10 variants
+              (N/S/M/B/L/X).
+            </p>
+            <p>
+              <strong>Internal code:</strong> Simulation + battery model, oracle
+              planner, training-data generation, imitation-learning controller,
+              and profiling utilities.
+            </p>
           </section>
         </div>
       </main>
