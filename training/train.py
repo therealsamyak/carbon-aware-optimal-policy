@@ -9,9 +9,10 @@ All configuration in training.config.json - no CLI arguments needed.
 """
 
 import copy
+import glob
 import json
-import logging
 import os
+import re
 import sys
 
 import numpy as np
@@ -22,8 +23,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 # Import training utilities (same directory, no path manipulation needed)
 from utils.logging_config import setup_logging
-
-logger = logging.getLogger(__name__)
 
 
 class PolicyNetwork(nn.Module):
@@ -57,11 +56,17 @@ def get_device() -> torch.device:
         return torch.device("cpu")
 
 
-def save_model(model: torch.nn.Module, filepath: str, metadata: dict = None) -> None:
+def save_model(
+    model: torch.nn.Module, filepath: str, metadata: dict | None = None
+) -> None:
     """Save model with metadata."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     torch.save(
-        {"model_state_dict": model.state_dict(), "metadata": metadata or {}}, filepath
+        {
+            "model_state_dict": model.state_dict(),
+            "metadata": metadata if metadata is not None else {},
+        },
+        filepath,
     )
 
 
@@ -76,7 +81,7 @@ class ImitationLoss(nn.Module):
     def forward(self, model_logits, charge_logit, model_target, charge_target):
         model_loss = self.model_loss(model_logits, model_target)
         charge_loss = self.charge_loss(charge_logit.squeeze(), charge_target.float())
-        total_loss = model_loss + charge_loss
+        total_loss = 0.5 * model_loss + 0.5 * charge_loss
         return total_loss, model_loss, charge_loss
 
 
@@ -103,7 +108,7 @@ class EarlyStopping:
         if self.counter >= self.patience:
             if self.restore_best_weights and self.best_weights is not None:
                 model.load_state_dict(self.best_weights)
-                logger.info("Restored best model weights from early stopping")
+                print("Restored best model weights from early stopping")
             return True
         return False
 
@@ -111,8 +116,8 @@ class EarlyStopping:
 def load_config(config_path: str):
     """Load configuration from JSON file."""
     if not os.path.exists(config_path):
-        logger.warning(f"Configuration file not found: {config_path}")
-        logger.info("Using default configuration...")
+        print(f"Configuration file not found: {config_path}")
+        print("Using default configuration...")
         return {
             "training": {
                 "learning_rate": 0.001,
@@ -183,32 +188,284 @@ def evaluate_model(model, data_loader, device, criterion):
     return avg_loss, avg_model_acc, avg_charge_acc
 
 
-def main():
-    """Main training function."""
-    # Setup logging first
-    logger = setup_logging()
+class ControllerDiscovery:
+    """Discovers and parses controller-specific training datasets."""
 
-    logger.info("=" * 60)
-    logger.info("🚀 POMDP Imitation Learning Training")
-    logger.info("=" * 60)
+    def __init__(self, data_directory: str):
+        self.data_directory = data_directory
+        self.pattern = r"controller_acc(?P<acc>[\d.]+)_lat(?P<lat>[\d.]+)_succ(?P<succ>\d+)_small(?P<small>\d+)_large(?P<large>\d+)_carb(?P<carb>\d+)_cap(?P<cap>\d+)_rate(?P<rate>[\d.]+)"
 
-    # Load configuration from fixed file path
-    config_path = "training/training.config.json"
-    config = load_config(config_path)
+    def discover_controllers(self) -> list[dict]:
+        """Discover all controller configurations in data directory."""
+        controllers = []
+        combined_files = glob.glob(f"{self.data_directory}/controller_*_combined.npz")
 
-    # Display configuration
-    logger.info(f"📄 Configuration: {config_path}")
+        for filepath in combined_files:
+            filename = os.path.basename(filepath)
+            match = re.match(self.pattern, filename)
+            if match:
+                controller_name = match.group(0).replace("_combined.npz", "")
+                params = match.groupdict()
 
+                controller = {
+                    "name": controller_name,
+                    "parameters": params,
+                    "combined_file": filepath,
+                    "train_file": filepath.replace("_combined.npz", "_train.npy"),
+                    "actions_file": filepath.replace(
+                        "_combined.npz", "_train_actions.npy"
+                    ),
+                    "val_file": filepath.replace("_combined.npz", "_val.npy"),
+                    "val_actions_file": filepath.replace(
+                        "_combined.npz", "_val_actions.npy"
+                    ),
+                    "test_file": filepath.replace("_combined.npz", "_test.npy"),
+                    "test_actions_file": filepath.replace(
+                        "_combined.npz", "_test_actions.npy"
+                    ),
+                }
+                controllers.append(controller)
+
+        return controllers
+
+
+def load_controller_data(controller: dict) -> tuple:
+    """Load train/val/test data for specific controller."""
+    train_obs = np.load(controller["train_file"])
+    train_actions = np.load(controller["actions_file"])
+    val_obs = np.load(controller["val_file"])
+    val_actions = np.load(controller["val_actions_file"])
+    test_obs = np.load(controller["test_file"])
+    test_actions = np.load(controller["test_actions_file"])
+
+    return train_obs, train_actions, val_obs, val_actions, test_obs, test_actions
+
+
+def train_single_controller(
+    model,
+    train_obs,
+    train_actions,
+    val_obs,
+    val_actions,
+    optimizer,
+    criterion,
+    controller,
+    config,
+    device,
+    logger,
+):
+    """Train single controller model."""
+    # Convert to tensors
+    train_dataset = TensorDataset(
+        torch.FloatTensor(train_obs), torch.LongTensor(train_actions)
+    )
+    val_dataset = TensorDataset(
+        torch.FloatTensor(val_obs), torch.LongTensor(val_actions)
+    )
+
+    batch_size = config.get("training", {}).get("batch_size", 32)
+    epochs = config.get("training", {}).get("epochs", 100)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    # Early stopping
+    early_stopping_config = config.get("training", {}).get("early_stopping", {})
+    if early_stopping_config.get("enabled", True):
+        early_stopping = EarlyStopping(
+            patience=early_stopping_config.get("patience", 10),
+            min_delta=early_stopping_config.get("min_delta", 0.001),
+            restore_best_weights=True,
+        )
+    else:
+        early_stopping = None
+
+    best_val_loss = float("inf")
+    final_val_model_acc = 0.0
+    final_val_charge_acc = 0.0
+
+    for epoch in range(epochs):
+        logger.info(f"📈 Epoch {epoch + 1}/{epochs}")
+
+        # Training
+        model.train()
+        train_total_losses = []
+
+        for observations, actions in train_loader:
+            observations = observations.to(device)
+            model_targets = actions[:, 0].to(device)
+            charge_targets = actions[:, 1].to(device)
+
+            optimizer.zero_grad()
+            model_logits, charge_logit = model(observations)
+            total_loss, model_loss, charge_loss = criterion(
+                model_logits, charge_logit, model_targets, charge_targets
+            )
+
+            total_loss.backward()
+            optimizer.step()
+            train_total_losses.append(total_loss.item())
+
+        # Validation
+        val_loss, val_model_acc, val_charge_acc = evaluate_model(
+            model, val_loader, device, criterion
+        )
+
+        avg_train_loss = np.mean(train_total_losses) if train_total_losses else 0
+
+        logger.info(f"  🏋 Train Loss: {avg_train_loss:.6f}")
+        logger.info(
+            f"  ✅ Val Loss: {val_loss:.6f} (Model Acc: {val_model_acc:.4f}, Charge Acc: {val_charge_acc:.4f})"
+        )
+
+        # Update best model
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            final_val_model_acc = val_model_acc
+            final_val_charge_acc = val_charge_acc
+
+        # Check early stopping
+        if early_stopping:
+            if early_stopping(val_loss, model):
+                logger.info(f"🛑 Early stopping triggered at epoch {epoch + 1}")
+                break
+
+        logger.info("-" * 60)
+
+    return best_val_loss, final_val_model_acc, final_val_charge_acc
+
+
+def log_training_summary(results: list[dict], logger):
+    """Log summary of all controller training results."""
+    logger.info("\n" + "=" * 80)
+    logger.info("🏆 TRAINING SUMMARY - ALL CONTROLLERS")
+    logger.info("=" * 80)
+
+    for result in results:
+        logger.info(f"\n🎯 {result['controller_name']}")
+        logger.info(f"   Parameters: {result['parameters']}")
+        logger.info(f"   Test Model Acc: {result['test_model_acc']:.4f}")
+        logger.info(f"   Test Charge Acc: {result['test_charge_acc']:.4f}")
+        logger.info(f"   Test Loss: {result['test_loss']:.6f}")
+
+    # Average performance
+    avg_model_acc = np.mean([r["test_model_acc"] for r in results])
+    avg_charge_acc = np.mean([r["test_charge_acc"] for r in results])
+
+    logger.info("\n📊 AVERAGE PERFORMANCE:")
+    logger.info(f"   Model Accuracy: {avg_model_acc:.4f}")
+    logger.info(f"   Charge Accuracy: {avg_charge_acc:.4f}")
+    logger.info("=" * 80)
+
+
+def train_per_controller_mode(config, device, logger) -> int:
+    """Train separate model for each controller configuration."""
+
+    # Discover all controllers
+    discovery = ControllerDiscovery(config["data_directory"])
+    controllers = discovery.discover_controllers()
+
+    logger.info(f"Found {len(controllers)} controllers to train")
+
+    results = []
+
+    for i, controller in enumerate(controllers, 1):
+        logger.info(f"\n{'=' * 60}")
+        logger.info(
+            f"🎯 Training Controller {i}/{len(controllers)}: {controller['name']}"
+        )
+        logger.info(f"📋 Parameters: {controller['parameters']}")
+        logger.info(f"{'=' * 60}")
+
+        # Load controller-specific data
+        train_obs, train_actions, val_obs, val_actions, test_obs, test_actions = (
+            load_controller_data(controller)
+        )
+
+        # Create fresh model for this controller
+        model = PolicyNetwork().to(device)
+        optimizer = optim.Adam(
+            model.parameters(),
+            lr=config.get("training", {}).get("learning_rate", 0.001),
+        )
+        criterion = ImitationLoss()
+
+        # Train this controller
+        best_val_loss, val_model_acc, val_charge_acc = train_single_controller(
+            model,
+            train_obs,
+            train_actions,
+            val_obs,
+            val_actions,
+            optimizer,
+            criterion,
+            controller,
+            config,
+            device,
+            logger,
+        )
+
+        # Test evaluation
+        test_dataset = TensorDataset(
+            torch.FloatTensor(test_obs), torch.LongTensor(test_actions)
+        )
+        batch_size = config.get("training", {}).get("batch_size", 32)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+        test_loss, test_model_acc, test_charge_acc = evaluate_model(
+            model, test_loader, device, criterion
+        )
+
+        # Save model with controller-specific naming
+        model_save_path = (
+            f"training/models/controller_{controller['name']}_best_model.pth"
+        )
+        os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+
+        model_metadata = {
+            "config": config,
+            "controller_name": controller["name"],
+            "controller_parameters": controller["parameters"],
+            "best_val_loss": best_val_loss,
+            "val_model_accuracy": val_model_acc,
+            "val_charge_accuracy": val_charge_acc,
+            "test_loss": test_loss,
+            "test_model_accuracy": test_model_acc,
+            "test_charge_accuracy": test_charge_acc,
+        }
+
+        save_model(model, model_save_path, model_metadata)
+        logger.info(f"  💾 Model saved: {model_save_path}")
+
+        # Store results
+        result = {
+            "controller_name": controller["name"],
+            "parameters": controller["parameters"],
+            "best_val_loss": best_val_loss,
+            "val_model_acc": val_model_acc,
+            "val_charge_acc": val_charge_acc,
+            "test_loss": test_loss,
+            "test_model_acc": test_model_acc,
+            "test_charge_acc": test_charge_acc,
+        }
+        results.append(result)
+
+        logger.info(f"✅ Controller {controller['name']} completed")
+        logger.info(
+            f"   Test Results: Model Acc: {test_model_acc:.4f}, Charge Acc: {test_charge_acc:.4f}"
+        )
+
+    # Final summary
+    log_training_summary(results, logger)
+    return 0
+
+
+def train_generic_mode(config, device, logger) -> int:
+    """Original generic training mode for backward compatibility."""
+    # Load configuration
     training_config = config.get("training", {})
-    logger.info(f"🏋 Epochs: {training_config.get('epochs', 'N/A')}")
-    logger.info(f"📦 Batch size: {training_config.get('batch_size', 'N/A')}")
-    logger.info(f"⚡ Learning rate: {training_config.get('learning_rate', 'N/A')}")
-    logger.info("-" * 60)
 
-    # Setup
-    device = get_device()
-    logger.info(f"💻 Using device: {device}")
-
+    # Setup model
     model = PolicyNetwork().to(device)
     criterion = ImitationLoss()
     optimizer = optim.Adam(
@@ -363,6 +620,40 @@ def main():
     logger.info("=" * 60)
 
     return 0
+
+
+def main():
+    """Main training function."""
+    # Setup logging first
+    logger = setup_logging()
+
+    logger.info("=" * 60)
+    logger.info("🚀 POMDP Imitation Learning Training")
+    logger.info("=" * 60)
+
+    # Load configuration from fixed file path
+    config_path = "training/training.config.json"
+    config = load_config(config_path)
+
+    # Display configuration
+    logger.info(f"📄 Configuration: {config_path}")
+
+    training_config = config.get("training", {})
+    logger.info(f"🏋 Epochs: {training_config.get('epochs', 'N/A')}")
+    logger.info(f"📦 Batch size: {training_config.get('batch_size', 'N/A')}")
+    logger.info(f"⚡ Learning rate: {training_config.get('learning_rate', 'N/A')}")
+    logger.info(f"🎯 Training Mode: {config.get('training_mode', 'generic')}")
+    logger.info("-" * 60)
+
+    # Setup
+    device = get_device()
+    logger.info(f"💻 Using device: {device}")
+
+    # Check training mode
+    if config.get("training_mode") == "per_controller":
+        return train_per_controller_mode(config, device, logger)
+    else:
+        return train_generic_mode(config, device, logger)
 
 
 if __name__ == "__main__":

@@ -47,6 +47,8 @@
     },
     "num_workers": 4
   },
+  "training_mode": "per_controller",
+  "data_directory": "data/training_data/",
   "data": {
     "train_data_path": "data/training_data/train.npy",
     "val_data_path": "data/training_data/val.npy",
