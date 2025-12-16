@@ -1181,7 +1181,7 @@ generate_comparative_analysis(controllers)</code></pre>
             <pre><code>[
   {
     "accuracy_threshold": 0.95,
-    "latency_threshold_seconds": 0.012
+    "latency_threshold_seconds": 0.015
   },
   {
     "accuracy_threshold": 0.819,
@@ -1248,7 +1248,7 @@ generate_comparative_analysis(controllers)</code></pre>
   "training_mode": "per_controller",
   "learning_rate": 0.001,
   "batch_size": 32,
-  "epochs": 100,
+  "epochs": 500,
   "loss_function": "cross_entropy",
   "optimizer": "Adam"
 }</code></pre>
@@ -1315,9 +1315,9 @@ generate_comparative_analysis(controllers)</code></pre>
                   <td>15</td>
                   <td>610</td>
                   <td>0.000269</td>
-                  <td>0.9129</td>
+                  <td>0.984</td>
                   <td>1.0</td>
-                  <td>0.254231</td>
+                  <td>0.0446</td>
                 </tr>
                 <tr>
                   <td><strong>Controller 2</strong></td>
@@ -1329,56 +1329,42 @@ generate_comparative_analysis(controllers)</code></pre>
                   <td>7</td>
                   <td>610</td>
                   <td>0.000269</td>
-                  <td>0.9129</td>
+                  <td>0.929</td>
                   <td>1.0</td>
-                  <td>0.335757</td>
+                  <td>0.156</td>
                 </tr>
                 <tr>
                   <td><strong>Controller 3</strong></td>
                   <td>0.95</td>
-                  <td>0.012</td>
+                  <td>0.015</td>
+                  <td>20</td>
                   <td>5</td>
+                  <td>8</td>
                   <td>7</td>
-                  <td>10</td>
-                  <td>15</td>
                   <td>105</td>
                   <td>0.001598</td>
-                  <td>0.9286</td>
+                  <td>0.826</td>
                   <td>1.0</td>
-                  <td>0.215108</td>
+                  <td>0.232</td>
                 </tr>
                 <tr>
                   <td><strong>Controller 4</strong></td>
                   <td>0.95</td>
-                  <td>0.012</td>
-                  <td>20</td>
-                  <td>5</td>
-                  <td>8</td>
-                  <td>7</td>
-                  <td>105</td>
-                  <td>0.001598</td>
-                  <td>1.0</td>
-                  <td>1.0</td>
-                  <td>0.013937</td>
-                </tr>
-                <tr>
-                  <td><strong>Controller 5</strong></td>
-                  <td>0.95</td>
-                  <td>0.012</td>
+                  <td>0.015</td>
                   <td>20</td>
                   <td>5</td>
                   <td>8</td>
                   <td>7</td>
                   <td>610</td>
                   <td>0.000269</td>
-                  <td>0.9286</td>
+                  <td>0.929</td>
                   <td>1.0</td>
-                  <td>0.193608</td>
+                  <td>0.157</td>
                 </tr>
                 <tr>
-                  <td><strong>Controller 6</strong></td>
+                  <td><strong>Controller 5</strong></td>
                   <td>0.95</td>
-                  <td>0.012</td>
+                  <td>0.015</td>
                   <td>5</td>
                   <td>7</td>
                   <td>10</td>
@@ -1387,35 +1373,49 @@ generate_comparative_analysis(controllers)</code></pre>
                   <td>0.000269</td>
                   <td>1.0</td>
                   <td>1.0</td>
-                  <td>0.009021</td>
+                  <td>0.0156</td>
+                </tr>
+                <tr>
+                  <td><strong>Controller 6</strong></td>
+                  <td>0.819</td>
+                  <td>0.006</td>
+                  <td>20</td>
+                  <td>5</td>
+                  <td>8</td>
+                  <td>7</td>
+                  <td>105</td>
+                  <td>0.001598</td>
+                  <td>0.913</td>
+                  <td>1.0</td>
+                  <td>0.204</td>
                 </tr>
                 <tr>
                   <td><strong>Controller 7</strong></td>
                   <td>0.819</td>
                   <td>0.006</td>
-                  <td>20</td>
-                  <td>5</td>
-                  <td>8</td>
-                  <td>7</td>
-                  <td>105</td>
-                  <td>0.001598</td>
-                  <td>1.0</td>
-                  <td>1.0</td>
-                  <td>0.010776</td>
-                </tr>
-                <tr>
-                  <td><strong>Controller 8</strong></td>
-                  <td>0.819</td>
-                  <td>0.006</td>
                   <td>5</td>
                   <td>7</td>
                   <td>10</td>
                   <td>15</td>
                   <td>105</td>
                   <td>0.001598</td>
-                  <td>0.9286</td>
+                  <td>0.913</td>
                   <td>1.0</td>
-                  <td>0.207883</td>
+                  <td>0.162</td>
+                </tr>
+                <tr>
+                  <td><strong>Controller 8</strong></td>
+                  <td>0.95</td>
+                  <td>0.015</td>
+                  <td>5</td>
+                  <td>7</td>
+                  <td>10</td>
+                  <td>15</td>
+                  <td>105</td>
+                  <td>0.001598</td>
+                  <td>0.754</td>
+                  <td>1.0</td>
+                  <td>0.294</td>
                 </tr>
               </tbody>
             </table>
@@ -1423,7 +1423,7 @@ generate_comparative_analysis(controllers)</code></pre>
             <h4>Training Summary</h4>
             <p><strong>Average Performance Across All Controllers:</strong></p>
             <ul>
-              <li><strong>Model Accuracy:</strong> 0.9515 (95.15%)</li>
+              <li><strong>Model Accuracy:</strong> 0.906 (90.6%)</li>
               <li><strong>Charge Accuracy:</strong> 1.0 (100%)</li>
             </ul>
 
@@ -1467,7 +1467,7 @@ generate_comparative_analysis(controllers)</code></pre>
 
             <h4 id="4.4.2-latency-threshold-ablation-study">4.4.2 Latency Threshold</h4>
             <p>
-              Impact of varying latency requirements (0.006s vs 0.012s) on controller performance.
+              Impact of varying latency requirements (0.006s vs 0.015s) on controller performance.
             </p>
             <div class="chart-placeholder">
               <strong>Figure 4.3:</strong> Performance metrics by latency threshold
@@ -1632,8 +1632,8 @@ generate_comparative_analysis(controllers)</code></pre>
             <p><strong>Where to cite data:</strong></p>
             <ul>
               <li>
-                Reference <a href="#ablation-studies">Section 4.4</a> (Figures 4.2–4.8) for accuracy,
-                latency, reward-weight, battery, and seasonal impacts.
+                Reference <a href="#ablation-studies">Section 4.4</a> (Figures 4.2–4.8) for
+                accuracy, latency, reward-weight, battery, and seasonal impacts.
               </li>
               <li>
                 Reference <a href="#4.4.7-model-selection-patterns">Section 4.4.7</a> (Figure 4.11)
@@ -1669,8 +1669,8 @@ generate_comparative_analysis(controllers)</code></pre>
             <p><strong>Where to cite data:</strong></p>
             <ul>
               <li>
-                Reference <a href="#controller-training-statistics">Section 4.2</a> to highlight that
-                each controller corresponds to a fixed parameter tuple.
+                Reference <a href="#controller-training-statistics">Section 4.2</a> to highlight
+                that each controller corresponds to a fixed parameter tuple.
               </li>
               <li>
                 Reference <a href="#ablation-studies">Section 4.4</a> to motivate why broader
