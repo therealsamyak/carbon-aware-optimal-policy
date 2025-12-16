@@ -73,7 +73,10 @@ class MLController:
         # Load trained model
         if model_path is None:
             model_path = os.path.join(
-                project_root, "training", "models", "best_model.pth"
+                project_root,
+                "training",
+                "models",
+                "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth",
             )
 
         if not os.path.exists(model_path):
