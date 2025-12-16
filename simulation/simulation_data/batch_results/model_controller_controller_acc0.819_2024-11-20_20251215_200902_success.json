@@ -1,10 +1,10 @@
 {
-  "model_filename": "controller_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth",
-  "test_date": "2024-08-20",
+  "model_filename": "controller_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap105_rate0.001598_best_model.pth",
+  "test_date": "2024-11-20",
   "config": {
     "system": {
-      "battery_capacity_mwh": 610,
-      "charge_rate_mwh_per_second": 0.000269,
+      "battery_capacity_mwh": 105,
+      "charge_rate_mwh_per_second": 0.001598,
       "task_interval_seconds": 3600,
       "horizon_seconds": 86400,
       "battery_discretization_step": 0.01,
@@ -16,17 +16,17 @@
       "latency_threshold_seconds": 0.006
     },
     "reward_weights": {
-      "success_weight": 20,
-      "small_miss_weight": 5,
-      "large_miss_weight": 8,
-      "carbon_weight": 7
+      "success_weight": 5,
+      "small_miss_weight": 7,
+      "large_miss_weight": 10,
+      "carbon_weight": 15
     },
     "data_paths": {
       "model_profiles": "../model-profiler/power_profiles.json",
       "energy_data": "../energy-data/US-CAL-LDWP_2024_5_minute.csv"
     },
     "simulation": {
-      "start_date": "2024-08-20",
+      "start_date": "2024-11-20",
       "start_time": "00:00:00"
     }
   },
@@ -74,10 +74,10 @@
       "energy_per_inference": 0.0
     }
   },
-  "timestamp": "2025-12-15T07:05:53.520005",
+  "timestamp": "2025-12-15T20:04:23.234157",
   "controllers": {
     "oracle": {
-      "total_reward": 452.0,
+      "total_reward": 105.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 23,
@@ -94,150 +94,150 @@
           "timestep": 0,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 610
+          "battery_level": 105
         },
         {
           "timestep": 1,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 608.0060647
+          "battery_level": 103.0060647
         },
         {
           "timestep": 2,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 606.0121294
+          "battery_level": 101.0121294
         },
         {
           "timestep": 3,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 604.0181941
+          "battery_level": 99.0181941
         },
         {
           "timestep": 4,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 602.0242588
+          "battery_level": 97.0242588
         },
         {
           "timestep": 5,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 600.0303235
+          "battery_level": 95.0303235
         },
         {
           "timestep": 6,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 598.0363882
+          "battery_level": 93.0363882
         },
         {
           "timestep": 7,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 596.0424529
+          "battery_level": 91.0424529
         },
         {
           "timestep": 8,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 594.0485176
+          "battery_level": 89.0485176
         },
         {
           "timestep": 9,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 592.0545823
+          "battery_level": 87.0545823
         },
         {
           "timestep": 10,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 590.060647
+          "battery_level": 85.060647
         },
         {
           "timestep": 11,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 588.0667117
+          "battery_level": 83.0667117
         },
         {
           "timestep": 12,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 586.0727764
+          "battery_level": 81.0727764
         },
         {
           "timestep": 13,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 584.0788411
+          "battery_level": 79.0788411
         },
         {
           "timestep": 14,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 582.0849058
+          "battery_level": 77.0849058
         },
         {
           "timestep": 15,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 580.0909705
+          "battery_level": 75.0909705
         },
         {
           "timestep": 16,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 578.0970352
+          "battery_level": 73.0970352
         },
         {
           "timestep": 17,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 576.1030999
+          "battery_level": 71.1030999
         },
         {
           "timestep": 18,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 574.1091646
+          "battery_level": 69.1091646
         },
         {
           "timestep": 19,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 572.1152293
+          "battery_level": 67.1152293
         },
         {
           "timestep": 20,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 570.121294
+          "battery_level": 65.121294
         },
         {
           "timestep": 21,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 568.1273587
+          "battery_level": 63.1273587
         },
         {
           "timestep": 22,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 566.1334234
+          "battery_level": 61.1334234
         },
         {
           "timestep": 23,
           "model": "NO_MODEL",
           "charge": false,
-          "battery_level": 564.1394881
+          "battery_level": 59.1394881
         }
       ]
     },
     "naive": {
-      "total_reward": 480.0,
+      "total_reward": 120.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 24,
@@ -254,150 +254,150 @@
           "timestep": 0,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 610
+          "battery_level": 105
         },
         {
           "timestep": 1,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 608.0060647
+          "battery_level": 103.0060647
         },
         {
           "timestep": 2,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 606.0121294
+          "battery_level": 101.0121294
         },
         {
           "timestep": 3,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 604.0181941
+          "battery_level": 99.0181941
         },
         {
           "timestep": 4,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 602.0242588
+          "battery_level": 97.0242588
         },
         {
           "timestep": 5,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 600.0303235
+          "battery_level": 95.0303235
         },
         {
           "timestep": 6,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 598.0363882
+          "battery_level": 93.0363882
         },
         {
           "timestep": 7,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 596.0424529
+          "battery_level": 91.0424529
         },
         {
           "timestep": 8,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 594.0485176
+          "battery_level": 89.0485176
         },
         {
           "timestep": 9,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 592.0545823
+          "battery_level": 87.0545823
         },
         {
           "timestep": 10,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 590.060647
+          "battery_level": 85.060647
         },
         {
           "timestep": 11,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 588.0667117
+          "battery_level": 83.0667117
         },
         {
           "timestep": 12,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 586.0727764
+          "battery_level": 81.0727764
         },
         {
           "timestep": 13,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 584.0788411
+          "battery_level": 79.0788411
         },
         {
           "timestep": 14,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 582.0849058
+          "battery_level": 77.0849058
         },
         {
           "timestep": 15,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 580.0909705
+          "battery_level": 75.0909705
         },
         {
           "timestep": 16,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 578.0970352
+          "battery_level": 73.0970352
         },
         {
           "timestep": 17,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 576.1030999
+          "battery_level": 71.1030999
         },
         {
           "timestep": 18,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 574.1091646
+          "battery_level": 69.1091646
         },
         {
           "timestep": 19,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 572.1152293
+          "battery_level": 67.1152293
         },
         {
           "timestep": 20,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 570.121294
+          "battery_level": 65.121294
         },
         {
           "timestep": 21,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 568.1273587
+          "battery_level": 63.1273587
         },
         {
           "timestep": 22,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 566.1334234
+          "battery_level": 61.1334234
         },
         {
           "timestep": 23,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 564.1394881
+          "battery_level": 59.1394881
         }
       ]
     },
     "ml": {
-      "total_reward": 480.0,
+      "total_reward": 120.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 24,
@@ -414,145 +414,145 @@
           "timestep": 0,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 610
+          "battery_level": 105
         },
         {
           "timestep": 1,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 608.0060647
+          "battery_level": 103.0060647
         },
         {
           "timestep": 2,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 606.0121294
+          "battery_level": 101.0121294
         },
         {
           "timestep": 3,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 604.0181941
+          "battery_level": 99.0181941
         },
         {
           "timestep": 4,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 602.0242588
+          "battery_level": 97.0242588
         },
         {
           "timestep": 5,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 600.0303235
+          "battery_level": 95.0303235
         },
         {
           "timestep": 6,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 598.0363882
+          "battery_level": 93.0363882
         },
         {
           "timestep": 7,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 596.0424529
+          "battery_level": 91.0424529
         },
         {
           "timestep": 8,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 594.0485176
+          "battery_level": 89.0485176
         },
         {
           "timestep": 9,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 592.0545823
+          "battery_level": 87.0545823
         },
         {
           "timestep": 10,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 590.060647
+          "battery_level": 85.060647
         },
         {
           "timestep": 11,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 588.0667117
+          "battery_level": 83.0667117
         },
         {
           "timestep": 12,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 586.0727764
+          "battery_level": 81.0727764
         },
         {
           "timestep": 13,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 584.0788411
+          "battery_level": 79.0788411
         },
         {
           "timestep": 14,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 582.0849058
+          "battery_level": 77.0849058
         },
         {
           "timestep": 15,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 580.0909705
+          "battery_level": 75.0909705
         },
         {
           "timestep": 16,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 578.0970352
+          "battery_level": 73.0970352
         },
         {
           "timestep": 17,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 576.1030999
+          "battery_level": 71.1030999
         },
         {
           "timestep": 18,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 574.1091646
+          "battery_level": 69.1091646
         },
         {
           "timestep": 19,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 572.1152293
+          "battery_level": 67.1152293
         },
         {
           "timestep": 20,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 570.121294
+          "battery_level": 65.121294
         },
         {
           "timestep": 21,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 568.1273587
+          "battery_level": 63.1273587
         },
         {
           "timestep": 22,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 566.1334234
+          "battery_level": 61.1334234
         },
         {
           "timestep": 23,
           "model": "YOLOv10_S",
           "charge": false,
-          "battery_level": 564.1394881
+          "battery_level": 59.1394881
         }
       ]
     }

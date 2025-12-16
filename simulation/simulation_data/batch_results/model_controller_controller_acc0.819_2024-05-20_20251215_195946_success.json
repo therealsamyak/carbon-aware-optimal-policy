@@ -1,6 +1,6 @@
 {
   "model_filename": "controller_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap105_rate0.001598_best_model.pth",
-  "test_date": "2024-11-20",
+  "test_date": "2024-05-20",
   "config": {
     "system": {
       "battery_capacity_mwh": 105,
@@ -26,7 +26,7 @@
       "energy_data": "../energy-data/US-CAL-LDWP_2024_5_minute.csv"
     },
     "simulation": {
-      "start_date": "2024-11-20",
+      "start_date": "2024-05-20",
       "start_time": "00:00:00"
     }
   },
@@ -74,21 +74,21 @@
       "energy_per_inference": 0.0
     }
   },
-  "timestamp": "2025-12-15T06:04:21.613530",
+  "timestamp": "2025-12-15T19:54:56.862318",
   "controllers": {
     "oracle": {
-      "total_reward": 105.0,
+      "total_reward": 120.0,
       "path_length": 24,
       "success_metrics": {
-        "success_count": 23,
+        "success_count": 24,
         "small_miss_count": 0,
-        "failure_count": 1,
+        "failure_count": 0,
         "total_timesteps": 24,
-        "success_rate": 0.9583333333333334,
+        "success_rate": 1.0,
         "small_miss_rate": 0.0,
-        "failure_rate": 0.041666666666666664
+        "failure_rate": 0.0
       },
-      "uptime_metric": 0.8227201257861636,
+      "uptime_metric": 0.8584905660377359,
       "actions": [
         {
           "timestep": 0,
@@ -230,7 +230,7 @@
         },
         {
           "timestep": 23,
-          "model": "NO_MODEL",
+          "model": "YOLOv10_S",
           "charge": false,
           "battery_level": 59.1394881
         }

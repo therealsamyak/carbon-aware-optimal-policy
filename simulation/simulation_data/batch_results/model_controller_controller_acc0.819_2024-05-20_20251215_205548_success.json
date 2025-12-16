@@ -1,6 +1,6 @@
 {
-  "model_filename": "controller_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth",
-  "test_date": "2024-02-20",
+  "model_filename": "controller_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap610_rate0.000269_best_model.pth",
+  "test_date": "2024-05-20",
   "config": {
     "system": {
       "battery_capacity_mwh": 610,
@@ -16,17 +16,17 @@
       "latency_threshold_seconds": 0.006
     },
     "reward_weights": {
-      "success_weight": 20,
-      "small_miss_weight": 5,
-      "large_miss_weight": 8,
-      "carbon_weight": 7
+      "success_weight": 5,
+      "small_miss_weight": 7,
+      "large_miss_weight": 10,
+      "carbon_weight": 15
     },
     "data_paths": {
       "model_profiles": "../model-profiler/power_profiles.json",
       "energy_data": "../energy-data/US-CAL-LDWP_2024_5_minute.csv"
     },
     "simulation": {
-      "start_date": "2024-02-20",
+      "start_date": "2024-05-20",
       "start_time": "00:00:00"
     }
   },
@@ -74,10 +74,10 @@
       "energy_per_inference": 0.0
     }
   },
-  "timestamp": "2025-12-15T06:57:41.320365",
+  "timestamp": "2025-12-15T20:51:08.613419",
   "controllers": {
     "oracle": {
-      "total_reward": 452.0,
+      "total_reward": 105.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 23,
@@ -237,7 +237,7 @@
       ]
     },
     "naive": {
-      "total_reward": 480.0,
+      "total_reward": 120.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 24,
@@ -397,7 +397,7 @@
       ]
     },
     "ml": {
-      "total_reward": 480.0,
+      "total_reward": 120.0,
       "path_length": 24,
       "success_metrics": {
         "success_count": 24,
