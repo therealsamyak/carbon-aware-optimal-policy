@@ -6,7 +6,7 @@
     "nearest_neighbor_k": 3
   },
   "user_parameters": [
-    { "accuracy_threshold": 0.95, "latency_threshold_seconds": 0.012 },
+    { "accuracy_threshold": 0.95, "latency_threshold_seconds": 0.015 },
     { "accuracy_threshold": 0.819, "latency_threshold_seconds": 0.006 }
   ],
   "reward_weights": [
