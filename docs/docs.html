@@ -60,8 +60,8 @@
 
             <h3>Environment Setup</h3>
             <p>Create a virtual environment and install dependencies:</p>
-            <pre><code class="language-bash">python3 -m venv venv
-source venv/bin/activate
+            <pre><code class="language-bash">python3 -m venv .venv
+source .venv/bin/activate
 pip install .</code></pre>
 
             <p>This installs all required dependencies from pyproject.toml.</p>
@@ -156,17 +156,19 @@ pip install .</code></pre>
 
             <p>
               The training data generation pipeline creates datasets by running Oracle simulations
-              for all parameter combinations defined in
-              <a
-                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/data/data.config.json"
-                target="_blank"
-                >data/data.config.json</a
-              >.
+              over a given set of parameter combinations.
             </p>
 
             <pre><code class="language-bash">python3 data/generate_data.py</code></pre>
 
-            <p>Key configuration parameters in data/data.config.json:</p>
+            <p>
+              Key configuration parameters in
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/data/data.config.json"
+                target="_blank"
+                >data/data.config.json</a
+              >:
+            </p>
             <ul>
               <li>User parameters: Accuracy/latency thresholds, reward weights</li>
               <li>Battery configurations: Capacity and charge rates</li>
@@ -204,10 +206,9 @@ pip install .</code></pre>
               >:
             </p>
             <ul>
-              <li>Training mode: "generic" or "per_controller"</li>
+              <li>Training mode: "per_controller" (uses controller-specific datasets)</li>
               <li>Hyperparameters: Learning rate, batch size, epochs</li>
-              <li>Data paths: Training/validation/test dataset locations</li>
-              <li>Model paths: Where to save trained models</li>
+              <li>Early stopping: Patience and minimum delta thresholds</li>
             </ul>
 
             <p>Output: Trained models saved to training/models/ with parameter-specific naming.</p>
