@@ -289,6 +289,14 @@ table {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 800px;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
 }
 
 th,
@@ -323,11 +331,23 @@ tr:hover {
     width: 100%;
     padding: 20px;
     margin-left: 0;
+    overflow-x: auto;
   }
 
   .content-wrapper {
     padding: 0;
     max-width: 100%;
+  }
+
+  table {
+    min-width: 800px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
   }
 
   .top-nav .nav-links {
