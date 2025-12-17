@@ -2,8 +2,11 @@
 """
 Results Analysis Script for Optimal Charge Security Camera
 
-Generates all charts required for Section 4 (Evaluation & Results) of report.
-This script processes batch simulation results and creates comprehensive performance visualizations.
+Implements GRAPH.md requirements:
+- Dynamic ablation pair identification
+- Consistent 3-panel horizontal layout (Accuracy | Utility | Uptime)
+- Targeted parameter isolation studies
+- Simple averages (no confidence intervals)
 
 """
 
@@ -13,7 +16,7 @@ import glob
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import seaborn as sns
-from typing import Dict
+from typing import Dict, List
 import warnings
 import sys
 
@@ -40,7 +43,7 @@ plt.rcParams.update(
 
 
 class ResultsAnalyzer:
-    """Main class for analyzing batch results and generating charts."""
+    """Main class for analyzing batch results and generating targeted ablation charts."""
 
     def __init__(self, config_path: str = "results/results.config.json"):
         # Load configuration
@@ -61,6 +64,7 @@ class ResultsAnalyzer:
         self.batch_data = None
         self.summary_data = None
         self.model_configs = {}
+        self.controller_configs = {}
 
         # Validate paths exist
         self._validate_paths()
@@ -130,10 +134,39 @@ class ResultsAnalyzer:
         # Parse model configurations
         self._parse_model_configurations()
 
+        # Load controller configurations from training metadata
+        self.controller_configs = self.load_controller_configs()
+
         # Load individual batch results for detailed analysis
         self._load_individual_results()
 
         print(f"Loaded data for {len(self.model_configs)} model configurations")
+
+    def load_controller_configs(self) -> Dict:
+        """Load controller configurations from training.metadata.json."""
+        config_path = os.path.join("..", "training", "models", "training.metadata.json")
+
+        if not os.path.exists(config_path):
+            # Fallback to relative path
+            config_path = "training/models/training.metadata.json"
+
+        try:
+            with open(config_path, "r") as f:
+                metadata = json.load(f)
+
+            # Map configurations to model names
+            configs = {}
+            for i, config in enumerate(metadata["controllers"]):
+                # Generate model filename for this config
+                model_name = f"C{i + 1}_controller_acc{config['acc']}_lat{config['lat']}_succ{config['succ']}_small{config['small']}_large{config['large']}_carb{config['carb']}_cap{config['cap']}_rate{config['rate']}_best_model.pth"
+                configs[model_name] = config
+
+            print(f"Loaded {len(configs)} controller configurations")
+            return configs
+
+        except FileNotFoundError:
+            print(f"Warning: Could not find training metadata at {config_path}")
+            return {}
 
     def _parse_model_configurations(self):
         """Parse model filenames to extract configuration parameters."""
@@ -192,11 +225,6 @@ class ResultsAnalyzer:
             )
         return model_filename.split("_controller_")[0]
 
-    def _get_short_name(self, config: Dict) -> str:
-        """Extract controller short name from prefixed model filename."""
-        model_file = config.get("model_file", "")
-        return self._extract_controller_name(model_file)
-
     def _load_individual_results(self):
         """Load individual batch result files for detailed analysis."""
         self.batch_data = {}
@@ -212,193 +240,401 @@ class ResultsAnalyzer:
                 key = f"{model_file}_{test_date}"
                 self.batch_data[key] = data
 
-    def generate_all_charts(self):
-        """Generate all required charts for Section 4."""
-        print("Generating all charts for Section 4...")
+    def find_ablation_pairs(self, configs: Dict, param_type: str) -> Dict:
+        """Find clean ablation pairs differing by exactly one parameter."""
+        pairs = {}
+        models = list(configs.keys())
 
-        # Figure 4.1: Controller Performance Comparison
-        self.create_figure_4_1()
+        if param_type == "accuracy":
+            # Find models differing only in accuracy threshold
+            for i, model1 in enumerate(models):
+                for j, model2 in enumerate(models):
+                    if i >= j:
+                        continue
 
-        # Figures 4.2-4.3: Accuracy/Latency Threshold Studies
-        self.create_figure_4_2()
-        self.create_figure_4_3()
+                    config1, config2 = configs[model1], configs[model2]
 
-        # Figures 4.4-4.5: Reward Weight Analysis
-        self.create_figure_4_4()
-        self.create_figure_4_5()
+                    # Check if all parameters except accuracy are the same
+                    same_params = (
+                        config1["lat"] == config2["lat"]
+                        and config1["succ"] == config2["succ"]
+                        and config1["small"] == config2["small"]
+                        and config1["large"] == config2["large"]
+                        and config1["carb"] == config2["carb"]
+                        and config1["cap"] == config2["cap"]
+                        and config1["rate"] == config2["rate"]
+                        and config1["acc"] != config2["acc"]
+                    )
 
-        # Figures 4.6-4.7: Battery Configuration Impact
-        self.create_figure_4_6()
-        self.create_figure_4_7()
+                    if same_params:
+                        pairs[param_type] = (model1, model2)
+                        return pairs
 
-        print(f"All charts saved to {self.output_dir}")
+        elif param_type == "latency":
+            # Find models differing only in latency threshold
+            for i, model1 in enumerate(models):
+                for j, model2 in enumerate(models):
+                    if i >= j:
+                        continue
+
+                    config1, config2 = configs[model1], configs[model2]
+
+                    same_params = (
+                        config1["acc"] == config2["acc"]
+                        and config1["succ"] == config2["succ"]
+                        and config1["small"] == config2["small"]
+                        and config1["large"] == config2["large"]
+                        and config1["carb"] == config2["carb"]
+                        and config1["cap"] == config2["cap"]
+                        and config1["rate"] == config2["rate"]
+                        and config1["lat"] != config2["lat"]
+                    )
+
+                    if same_params:
+                        pairs[param_type] = (model1, model2)
+                        return pairs
+
+        elif param_type == "battery":
+            # Find models differing only in battery capacity/rate
+            for i, model1 in enumerate(models):
+                for j, model2 in enumerate(models):
+                    if i >= j:
+                        continue
+
+                    config1, config2 = configs[model1], configs[model2]
+
+                    same_params = (
+                        config1["acc"] == config2["acc"]
+                        and config1["lat"] == config2["lat"]
+                        and config1["succ"] == config2["succ"]
+                        and config1["small"] == config2["small"]
+                        and config1["large"] == config2["large"]
+                        and config1["carb"] == config2["carb"]
+                        and (
+                            config1["cap"] != config2["cap"]
+                            or config1["rate"] != config2["rate"]
+                        )
+                    )
+
+                    if same_params:
+                        pairs[param_type] = (model1, model2)
+                        return pairs
+
+        elif param_type == "reward":
+            # Find models differing only in reward weights
+            for i, model1 in enumerate(models):
+                for j, model2 in enumerate(models):
+                    if i >= j:
+                        continue
+
+                    config1, config2 = configs[model1], configs[model2]
+
+                    same_params = (
+                        config1["acc"] == config2["acc"]
+                        and config1["lat"] == config2["lat"]
+                        and config1["cap"] == config2["cap"]
+                        and config1["rate"] == config2["rate"]
+                        and (
+                            config1["carb"] != config2["carb"]
+                            or config1["succ"] != config2["succ"]
+                            or config1["small"] != config2["small"]
+                            or config1["large"] != config2["large"]
+                        )
+                    )
+
+                    if same_params:
+                        pairs[param_type] = (model1, model2)
+                        return pairs
+
+        return pairs
 
     def format_percentage_axis(self, ax):
         """Format y-axis as percentage."""
         ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
 
-    def create_figure_4_1(self):
-        """Figure 4.1: Controller Performance Comparison across all model configurations."""
-        print("Creating Figure 4.1: Controller Performance Comparison...")
+    def create_three_panel_horizontal_layout(
+        self, title: str, model_data: List, save_path: str
+    ):
+        """Create consistent horizontal 3-panel layout (Accuracy | Utility | Uptime)."""
+        if not self.summary_data:
+            print("Warning: No summary data available for figure generation")
+            return
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+        fig.suptitle(title, fontsize=16, fontweight="bold")
+
+        # Get all unique models for this figure
+        all_models = []
+        for model_tuple in model_data:
+            if isinstance(model_tuple, tuple):
+                all_models.extend(model_tuple)
+            else:
+                all_models.append(model_tuple)
+
+        # Limit to first few models to prevent overcrowding
+        models_to_show = all_models[:4]
+
+        # Controller color mapping
+        controller_colors = {
+            "C1": "#1f77b4",  # Blue
+            "C2": "#ff7f0e",  # Orange
+            "C3": "#2ca02c",  # Green
+            "C4": "#d62728",  # Red
+            "C5": "#9467bd",  # Purple
+            "C6": "#8c564b",  # Brown
+            "C7": "#e377c2",  # Pink
+            "C8": "#7f7f7f",  # Gray
+        }
+
+        # Calculate bar positions for grouping
+        num_models = len(models_to_show)
+        bar_width = 0.25
+        group_width = bar_width * num_models
+
+        for i, model_file in enumerate(models_to_show):
+            try:
+                model_index = self.summary_data["graph_data"]["accuracy_metrics"][
+                    "models"
+                ].index(model_file)
+
+                # Extract controller name for display
+                controller_name = self._extract_controller_name(model_file)
+                controller_color = controller_colors.get(controller_name, "#333333")
+
+                # Calculate x positions for this controller's bars
+                x_oracle = [0 - group_width / 2 + i * bar_width]
+                x_ml = [1 - group_width / 2 + i * bar_width]
+                x_naive = [2 - group_width / 2 + i * bar_width]
+
+                # Panel 1: Accuracy Metrics
+                success_rates = [
+                    self.summary_data["graph_data"]["accuracy_metrics"][
+                        "success_rates"
+                    ]["oracle"][model_index],
+                    self.summary_data["graph_data"]["accuracy_metrics"][
+                        "success_rates"
+                    ]["ml"][model_index],
+                    self.summary_data["graph_data"]["accuracy_metrics"][
+                        "success_rates"
+                    ]["naive"][model_index],
+                ]
+
+                ax1.bar(
+                    x_oracle[0],
+                    success_rates[0],
+                    bar_width,
+                    label=f"{controller_name} (Oracle)",
+                    color=controller_color,
+                    alpha=0.8,
+                )
+                ax1.bar(
+                    x_ml[0],
+                    success_rates[1],
+                    bar_width,
+                    label=f"{controller_name} (ML)",
+                    color=controller_color,
+                    alpha=0.8,
+                )
+                ax1.bar(
+                    x_naive[0],
+                    success_rates[2],
+                    bar_width,
+                    label=f"{controller_name} (Naive)",
+                    color=controller_color,
+                    alpha=0.8,
+                )
+
+                # Panel 2: Utility Metrics
+                rewards = [
+                    self.summary_data["graph_data"]["utility_comparison"][
+                        "total_rewards"
+                    ]["oracle"][model_index],
+                    self.summary_data["graph_data"]["utility_comparison"][
+                        "total_rewards"
+                    ]["ml"][model_index],
+                    self.summary_data["graph_data"]["utility_comparison"][
+                        "total_rewards"
+                    ]["naive"][model_index],
+                ]
+
+                ax2.bar(
+                    x_oracle[0],
+                    rewards[0],
+                    bar_width,
+                    color=controller_color,
+                    alpha=0.8,
+                )
+                ax2.bar(
+                    x_ml[0], rewards[1], bar_width, color=controller_color, alpha=0.8
+                )
+                ax2.bar(
+                    x_naive[0], rewards[2], bar_width, color=controller_color, alpha=0.8
+                )
+
+                # Panel 3: Uptime Metrics
+                uptimes = [
+                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
+                        "oracle"
+                    ][model_index],
+                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
+                        "ml"
+                    ][model_index],
+                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
+                        "naive"
+                    ][model_index],
+                ]
+
+                ax3.bar(
+                    x_oracle[0],
+                    uptimes[0],
+                    bar_width,
+                    color=controller_color,
+                    alpha=0.8,
+                )
+                ax3.bar(
+                    x_ml[0], uptimes[1], bar_width, color=controller_color, alpha=0.8
+                )
+                ax3.bar(
+                    x_naive[0], uptimes[2], bar_width, color=controller_color, alpha=0.8
+                )
+
+            except (ValueError, IndexError, TypeError):
+                print(f"Warning: Could not process model {model_file}")
+                continue
+
+        # Configure Panel 1: Accuracy Metrics
+        ax1.set_title("Accuracy Metrics", fontweight="bold")
+        ax1.set_ylabel("Success Rate")
+        ax1.set_xticks([0, 1, 2])
+        ax1.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax1.set_ylim(0, 1.1)
+        ax1.grid(True, alpha=0.3)
+        self.format_percentage_axis(ax1)
+        ax1.legend()
+
+        # Configure Panel 2: Utility Metrics
+        ax2.set_title("Utility Metrics", fontweight="bold")
+        ax2.set_ylabel("Total Reward")
+        ax2.set_xticks([0, 1, 2])
+        ax2.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
+        ax2.grid(True, alpha=0.3)
+        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
+        ax2.legend()
+
+        # Configure Panel 3: Uptime Metrics
+        ax3.set_title("Uptime Metrics", fontweight="bold")
+        ax3.set_ylabel("Uptime Score")
+        ax3.set_xticks([0, 1, 2])
+        ax3.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax3.set_ylim(0, 1.1)
+        ax3.grid(True, alpha=0.3)
+        self.format_percentage_axis(ax3)
+        ax3.legend()
+
+        plt.tight_layout()
+        plt.savefig(save_path, bbox_inches="tight", dpi=300)
+        plt.close()
+
+    # ========== GRAPH.MD IMPLEMENTATION ==========
+
+    def create_figure_4_1(self):
+        """Figure 4.1: Overall Controller Performance Comparison (Section 4.3)."""
+        print("Creating Figure 4.1: Overall Controller Performance Comparison...")
+
+        if not self.summary_data:
+            self.load_data()
+
+        # Average across all 32 runs (all models x all dates)
+        models = self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+
+        # Calculate averages across all models
+        avg_success_oracle = sum(
+            self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
+                "oracle"
+            ]
+        ) / len(models)
+        avg_success_ml = sum(
+            self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"]["ml"]
+        ) / len(models)
+        avg_success_naive = sum(
+            self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
+                "naive"
+            ]
+        ) / len(models)
+
+        avg_reward_oracle = sum(
+            self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
+                "oracle"
+            ]
+        ) / len(models)
+        avg_reward_ml = sum(
+            self.summary_data["graph_data"]["utility_comparison"]["total_rewards"]["ml"]
+        ) / len(models)
+        avg_reward_naive = sum(
+            self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
+                "naive"
+            ]
+        ) / len(models)
+
+        avg_uptime_oracle = sum(
+            self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"]["oracle"]
+        ) / len(models)
+        avg_uptime_ml = sum(
+            self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"]["ml"]
+        ) / len(models)
+        avg_uptime_naive = sum(
+            self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"]["naive"]
+        ) / len(models)
+
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
         fig.suptitle(
-            "Figure 4.1: Controller Performance Comparison Across All Models",
+            "Figure 4.1: Overall Controller Performance Comparison",
             fontsize=16,
             fontweight="bold",
         )
 
-        models = self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+        # Panel 1: Accuracy Metrics
+        x = [0, 1, 2]
+        success_rates = [avg_success_oracle, avg_success_ml, avg_success_naive]
+        colors = ["#2E86AB", "#A23B72", "#F18F01"]
+        labels = ["Oracle", "ML", "Naive"]
 
-        # Ensure model_configs is populated
-        if not self.model_configs:
-            self._parse_model_configurations()
-
-        short_names = [self.model_configs[m]["short_name"] for m in models]
-
-        # Success Rates
-        success_rates = {
-            "Oracle": self.summary_data["graph_data"]["accuracy_metrics"][
-                "success_rates"
-            ]["oracle"],
-            "ML": self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                "ml"
-            ],
-            "Naive": self.summary_data["graph_data"]["accuracy_metrics"][
-                "success_rates"
-            ]["naive"],
-        }
-
-        x = list(range(len(short_names)))
-        width = 0.25
-
-        # Oracle bars
-        ax1.bar(
-            [i - width for i in x],
-            success_rates["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-
-        # ML bars with a single label but individual controller names on x-axis
-        ax1.bar(x, success_rates["ML"], width, label="ML Controllers", color="#A23B72")
-
-        # Naive bars
-        ax1.bar(
-            [i + width for i in x],
-            success_rates["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax1.set_title("Success Rates by Model Configuration")
-        ax1.set_ylabel("Success Rate")
+        ax1.bar(x, success_rates, color=colors, alpha=0.7)
+        ax1.set_title("Accuracy Metrics", fontweight="bold")
+        ax1.set_ylabel("Average Success Rate")
         ax1.set_xticks(x)
-        ax1.set_xticklabels(short_names, rotation=45, ha="right")
-        ax1.legend()
+        ax1.set_xticklabels(labels)
         ax1.set_ylim(0, 1.1)
+        ax1.grid(True, alpha=0.3)
         self.format_percentage_axis(ax1)
 
-        # Total Rewards
-        rewards = {
-            "Oracle": self.summary_data["graph_data"]["utility_comparison"][
-                "total_rewards"
-            ]["oracle"],
-            "ML": self.summary_data["graph_data"]["utility_comparison"][
-                "total_rewards"
-            ]["ml"],
-            "Naive": self.summary_data["graph_data"]["utility_comparison"][
-                "total_rewards"
-            ]["naive"],
-        }
-
-        ax2.bar(
-            [i - width for i in x],
-            rewards["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-
-        # ML bars with single label but individual controller names on x-axis
-        ax2.bar(x, rewards["ML"], width, label="ML Controllers", color="#A23B72")
-
-        ax2.bar(
-            [i + width for i in x],
-            rewards["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax2.set_title("Total Utility Rewards")
-        ax2.set_ylabel("Total Reward")
+        # Panel 2: Utility Metrics
+        rewards = [avg_reward_oracle, avg_reward_ml, avg_reward_naive]
+        ax2.bar(x, rewards, color=colors, alpha=0.7)
+        ax2.set_title("Utility Metrics", fontweight="bold")
+        ax2.set_ylabel("Average Total Reward")
         ax2.set_xticks(x)
-        ax2.set_xticklabels(short_names, rotation=45, ha="right")
-        ax2.legend()
+        ax2.set_xticklabels(labels)
         ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
+        ax2.grid(True, alpha=0.3)
         ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
 
-        # Uptime Metrics
-        uptime = {
-            "Oracle": self.summary_data["graph_data"]["uptime_metrics"][
-                "uptime_scores"
-            ]["oracle"],
-            "ML": self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                "ml"
-            ],
-            "Naive": self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                "naive"
-            ],
-        }
-
-        ax3.bar(
-            [i - width for i in x],
-            uptime["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-
-        # ML bars with specific controller names
-        for i, short_name in enumerate(short_names):
-            ax3.bar(i, uptime["ML"][i], width, label=short_name, color="#A23B72")
-
-        ax3.bar(
-            [i + width for i in x],
-            uptime["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax3.set_title("Uptime Metrics")
-        ax3.set_ylabel("Uptime Score")
+        # Panel 3: Uptime Metrics
+        uptimes = [avg_uptime_oracle, avg_uptime_ml, avg_uptime_naive]
+        ax3.bar(x, uptimes, color=colors, alpha=0.7)
+        ax3.set_title("Uptime Metrics", fontweight="bold")
+        ax3.set_ylabel("Average Uptime Score")
         ax3.set_xticks(x)
-        ax3.set_xticklabels(short_names, rotation=45, ha="right")
-        ax3.legend()
+        ax3.set_xticklabels(labels)
         ax3.set_ylim(0, 1.1)
+        ax3.grid(True, alpha=0.3)
         self.format_percentage_axis(ax3)
-
-        # Performance Gap Analysis (ML vs Oracle)
-        ml_success = list(success_rates["ML"])
-        oracle_success = list(success_rates["Oracle"])
-        performance_gap = [
-            oracle_success[i] - ml_success[i] for i in range(len(ml_success))
-        ]
-
-        ax4.bar(x, performance_gap, color="#E63946", alpha=0.7)
-        ax4.set_title("ML Controllers vs Oracle Performance Gap")
-        ax4.set_ylabel("Gap (Oracle - ML)")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(short_names, rotation=45, ha="right")
-        ax4.axhline(y=0, color="black", linestyle="-", alpha=0.5)
-        ax4.grid(True, alpha=0.3)
-        ax4.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
 
         plt.tight_layout()
         plt.savefig(
             os.path.join(
-                self.output_dir, "figure_4_1_controller_performance_comparison.png"
+                self.output_dir, "figure_4_1_overall_performance_comparison.png"
             ),
             bbox_inches="tight",
             dpi=300,
@@ -406,1057 +642,208 @@ class ResultsAnalyzer:
         plt.close()
 
     def create_figure_4_2(self):
-        """Figure 4.2: Success rates by accuracy threshold."""
-        print("Creating Figure 4.2: Success Rates by Accuracy Threshold...")
+        """Figure 4.2: Accuracy Threshold Impact (C1 vs C4)."""
+        print("Creating Figure 4.2: Accuracy Threshold Impact...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.2: Success Rates by Accuracy Threshold",
-            fontsize=16,
-            fontweight="bold",
-        )
+        if not self.summary_data:
+            self.load_data()
 
-        # Group by accuracy threshold
-        models = list(self.model_configs.keys())
-        acc_819_indices = [
-            i
-            for i, m in enumerate(models)
-            if self.model_configs[m]["accuracy_threshold"] == 0.819
-        ]
-        acc_950_indices = [
-            i
-            for i, m in enumerate(models)
-            if self.model_configs[m]["accuracy_threshold"] == 0.95
-        ]
+        # Use our pair identification algorithm
+        accuracy_pairs = self.find_ablation_pairs(self.controller_configs, "accuracy")
 
-        # Calculate average success rates by accuracy threshold
-        success_rates_oracle = self.summary_data["graph_data"]["accuracy_metrics"][
-            "success_rates"
-        ]["oracle"]
-        success_rates_ml = self.summary_data["graph_data"]["accuracy_metrics"][
-            "success_rates"
-        ]["ml"]
-        success_rates_naive = self.summary_data["graph_data"]["accuracy_metrics"][
-            "success_rates"
-        ]["naive"]
-
-        acc_819_oracle = [success_rates_oracle[i] for i in acc_819_indices]
-        acc_950_oracle = [success_rates_oracle[i] for i in acc_950_indices]
-        acc_819_ml = [success_rates_ml[i] for i in acc_819_indices]
-        acc_950_ml = [success_rates_ml[i] for i in acc_950_indices]
-        acc_819_naive = [success_rates_naive[i] for i in acc_819_indices]
-        acc_950_naive = [success_rates_naive[i] for i in acc_950_indices]
-
-        # Plot 1: Success rates by accuracy threshold
-        thresholds = ["81.9%", "95.0%"]
-        oracle_avg = [
-            sum(acc_819_oracle) / len(acc_819_oracle),
-            sum(acc_950_oracle) / len(acc_950_oracle),
-        ]
-        ml_avg = [sum(acc_819_ml) / len(acc_819_ml), sum(acc_950_ml) / len(acc_950_ml)]
-        naive_avg = [
-            sum(acc_819_naive) / len(acc_819_naive),
-            sum(acc_950_naive) / len(acc_950_naive),
-        ]
-
-        x = list(range(len(thresholds)))
-        width = 0.25
-
-        ax1.bar(
-            [i - width for i in x], oracle_avg, width, label="Oracle", color="#2E86AB"
-        )
-        ax1.bar(x, ml_avg, width, label="ML Controllers", color="#A23B72")
-        ax1.bar(
-            [i + width for i in x], naive_avg, width, label="Naive", color="#F18F01"
-        )
-        ax1.set_title("Average Success Rates by Accuracy Threshold")
-        ax1.set_ylabel("Success Rate")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(thresholds)
-        ax1.legend()
-        ax1.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax1)
-
-        # Plot 2: Performance gap by accuracy threshold
-        gap_819 = sum(acc_819_oracle) / len(acc_819_oracle) - sum(acc_819_ml) / len(
-            acc_819_ml
-        )
-        gap_950 = sum(acc_950_oracle) / len(acc_950_oracle) - sum(acc_950_ml) / len(
-            acc_950_ml
-        )
-
-        ax2.bar(thresholds, [gap_819, gap_950], color=["#2E86AB", "#A23B72"])
-        ax2.set_title("Oracle-ML Performance Gap by Accuracy Threshold")
-        ax2.set_ylabel("Performance Gap")
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.5)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
-
-        # Plot 3: Success rate distribution
-        ax3.boxplot([acc_819_oracle, acc_950_oracle], labels=["81.9%", "95.0%"])
-        ax3.set_title("Oracle Success Rate Distribution")
-        ax3.set_ylabel("Success Rate")
-        self.format_percentage_axis(ax3)
-
-        # Plot 4: Threshold impact on all controllers
-        ax4.plot(
-            thresholds, oracle_avg, "o-", label="Oracle", color="#2E86AB", linewidth=2
-        )
-        ax4.plot(
-            thresholds,
-            ml_avg,
-            "s-",
-            label="ML Controllers",
-            color="#A23B72",
-            linewidth=2,
-        )
-        ax4.plot(
-            thresholds, naive_avg, "^-", label="Naive", color="#F18F01", linewidth=2
-        )
-        ax4.set_title("Success Rate vs Accuracy Threshold")
-        ax4.set_ylabel("Success Rate")
-        ax4.set_xlabel("Accuracy Threshold")
-        ax4.legend()
-        ax4.set_ylim(0, 1.1)
-        ax4.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
-        ax4.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_2_accuracy_threshold_analysis.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
+        if "accuracy" in accuracy_pairs:
+            model1, model2 = accuracy_pairs["accuracy"]
+            title = f"Figure 4.2: Accuracy Threshold Impact ({self._extract_controller_name(model1)} vs {self._extract_controller_name(model2)})"
+            self.create_three_panel_horizontal_layout(
+                title,
+                [(model1, model2)],
+                os.path.join(
+                    self.output_dir, "figure_4_2_accuracy_threshold_impact.png"
+                ),
+            )
+        else:
+            # Fallback: manually use C1 vs C4
+            c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
+            c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
+            title = "Figure 4.2: Accuracy Threshold Impact (C1 vs C4)"
+            self.create_three_panel_horizontal_layout(
+                title,
+                [(c1_model, c4_model)],
+                os.path.join(
+                    self.output_dir, "figure_4_2_accuracy_threshold_impact.png"
+                ),
+            )
 
     def create_figure_4_3(self):
-        """Figure 4.3: Performance metrics by latency threshold."""
-        print("Creating Figure 4.3: Performance Metrics by Latency Threshold...")
+        """Figure 4.3: Latency Impact (C1 vs C4)."""
+        print("Creating Figure 4.3: Latency Impact...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.3: Performance Metrics by Latency Threshold",
-            fontsize=16,
-            fontweight="bold",
+        if not self.summary_data:
+            self.load_data()
+
+        c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
+        c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
+
+        title = "Figure 4.3: Latency Impact (C1 vs C4)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            [(c1_model, c4_model)],
+            os.path.join(self.output_dir, "figure_4_3_latency_impact.png"),
         )
-
-        # Group by latency threshold
-        models = list(self.model_configs.keys())
-        lat_006_indices = [
-            i
-            for i, m in enumerate(models)
-            if self.model_configs[m]["latency_threshold"] == 0.006
-        ]
-        lat_012_indices = [
-            i
-            for i, m in enumerate(models)
-            if self.model_configs[m]["latency_threshold"] == 0.015
-        ]
-
-        # Get data
-        success_rates = self.summary_data["graph_data"]["accuracy_metrics"][
-            "success_rates"
-        ]["oracle"]
-        rewards = self.summary_data["graph_data"]["utility_comparison"][
-            "total_rewards"
-        ]["oracle"]
-        uptime = self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-            "oracle"
-        ]
-
-        lat_006_success = [success_rates[i] for i in lat_006_indices]
-        lat_012_success = [success_rates[i] for i in lat_012_indices]
-        lat_006_rewards = [rewards[i] for i in lat_006_indices]
-        lat_012_rewards = [rewards[i] for i in lat_012_indices]
-        lat_006_uptime = [uptime[i] for i in lat_006_indices]
-        lat_012_uptime = [uptime[i] for i in lat_012_indices]
-
-        # Plot 1: Success Rate by Latency
-        latency_labels = ["6ms", "12ms"]
-        success_avg = [
-            sum(lat_006_success) / len(lat_006_success),
-            sum(lat_012_success) / len(lat_012_success),
-        ]
-
-        ax1.bar(latency_labels, success_avg, color=["#2E86AB", "#A23B72"])
-        ax1.set_title("Success Rate by Latency Threshold")
-        ax1.set_ylabel("Success Rate")
-        self.format_percentage_axis(ax1)
-
-        # Plot 2: Total Reward by Latency
-        reward_avg = [
-            sum(lat_006_rewards) / len(lat_006_rewards),
-            sum(lat_012_rewards) / len(lat_012_rewards),
-        ]
-
-        ax2.bar(latency_labels, reward_avg, color=["#2E86AB", "#A23B72"])
-        ax2.set_title("Total Reward by Latency Threshold")
-        ax2.set_ylabel("Total Reward")
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.5)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-
-        # Plot 3: Uptime by Latency
-        uptime_avg = [
-            sum(lat_006_uptime) / len(lat_006_uptime),
-            sum(lat_012_uptime) / len(lat_012_uptime),
-        ]
-
-        ax3.bar(latency_labels, uptime_avg, color=["#2E86AB", "#A23B72"])
-        ax3.set_title("Uptime by Latency Threshold")
-        ax3.set_ylabel("Uptime Score")
-        self.format_percentage_axis(ax3)
-
-        # Plot 4: Combined performance radar-like plot
-        categories = ["Success Rate", "Reward Score", "Uptime Score"]
-        lat_006_normalized = [
-            success_avg[0],
-            (reward_avg[0] - min(reward_avg)) / (max(reward_avg) - min(reward_avg))
-            if max(reward_avg) != min(reward_avg)
-            else 0.5,
-            uptime_avg[0],
-        ]
-        lat_012_normalized = [
-            success_avg[1],
-            (reward_avg[1] - min(reward_avg)) / (max(reward_avg) - min(reward_avg))
-            if max(reward_avg) != min(reward_avg)
-            else 0.5,
-            uptime_avg[1],
-        ]
-
-        x = list(range(len(categories)))
-        width = 0.35
-
-        ax4.bar(
-            [i - width / 2 for i in x],
-            lat_006_normalized,
-            width,
-            label="6ms",
-            color="#2E86AB",
-            alpha=0.7,
-        )
-        ax4.bar(
-            [i + width / 2 for i in x],
-            lat_012_normalized,
-            width,
-            label="12ms",
-            color="#A23B72",
-            alpha=0.7,
-        )
-        ax4.set_title("Normalized Performance Comparison")
-        ax4.set_ylabel("Normalized Score (0-1)")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(categories)
-        ax4.legend()
-        ax4.set_ylim(0, 1.1)
-        ax4.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
-
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_3_latency_threshold_analysis.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
 
     def create_figure_4_4(self):
-        """Figure 4.4: Performance-focused reward weights results."""
-        print("Creating Figure 4.4: Performance-Focused Reward Weights...")
+        """Figure 4.4: Reward Structure Impact (C4 vs C3)."""
+        print("Creating Figure 4.4: Reward Structure Impact...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.4: Performance-Focused Reward Weights (Success=20, Small Miss=5, Large Miss=8, Carbon=7)",
-            fontsize=16,
-            fontweight="bold",
+        if not self.summary_data:
+            self.load_data()
+
+        c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
+        c3_model = "C3_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap610_rate0.000269_best_model.pth"
+
+        title = "Figure 4.4: Reward Structure Impact (C4 vs C3)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            [(c4_model, c3_model)],
+            os.path.join(self.output_dir, "figure_4_4_reward_structure_impact.png"),
         )
-
-        # Filter performance-focused models
-        models = list(self.model_configs.keys())
-        perf_models = [
-            m
-            for m, config in self.model_configs.items()
-            if config["success_weight"] == 20
-        ]
-        perf_indices = [models.index(m) for m in perf_models]
-
-        # Success rates
-        perf_success = {
-            "Oracle": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "oracle"
-                ][i]
-                for i in perf_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "ml"
-                ][i]
-                for i in perf_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "naive"
-                ][i]
-                for i in perf_indices
-            ],
-        }
-
-        short_names = [self.model_configs[m]["short_name"] for m in perf_models]
-        x = list(range(len(short_names)))
-        width = 0.25
-
-        ax1.bar(
-            [i - width for i in x],
-            perf_success["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax1.bar(x, perf_success["ML"], width, label="ML Controllers", color="#A23B72")
-        ax1.bar(
-            [i + width for i in x],
-            perf_success["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax1.set_title("Success Rates")
-        ax1.set_ylabel("Success Rate")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(short_names, rotation=45, ha="right")
-        ax1.legend()
-        ax1.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax1)
-
-        # Total rewards
-        perf_rewards = {
-            "Oracle": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "oracle"
-                ][i]
-                for i in perf_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "ml"
-                ][i]
-                for i in perf_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "naive"
-                ][i]
-                for i in perf_indices
-            ],
-        }
-
-        ax2.bar(
-            [i - width for i in x],
-            perf_rewards["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax2.bar(x, perf_rewards["ML"], width, label="ML Controllers", color="#A23B72")
-        ax2.bar(
-            [i + width for i in x],
-            perf_rewards["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax2.set_title("Total Utility Rewards")
-        ax2.set_ylabel("Total Reward")
-        ax2.set_xticks(x)
-        ax2.set_xticklabels(short_names, rotation=45, ha="right")
-        ax2.legend()
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-
-        # Uptime metrics
-        perf_uptime = {
-            "Oracle": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "oracle"
-                ][i]
-                for i in perf_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "ml"
-                ][i]
-                for i in perf_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "naive"
-                ][i]
-                for i in perf_indices
-            ],
-        }
-
-        ax3.bar(
-            [i - width for i in x],
-            perf_uptime["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax3.bar(x, perf_uptime["ML"], width, label="ML Controllers", color="#A23B72")
-        ax3.bar(
-            [i + width for i in x],
-            perf_uptime["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax3.set_title("Uptime Metrics")
-        ax3.set_ylabel("Uptime Score")
-        ax3.set_xticks(x)
-        ax3.set_xticklabels(short_names, rotation=45, ha="right")
-        ax3.legend()
-        ax3.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax3)
-
-        # Performance efficiency (combined metric)
-        oracle_efficiency = [
-            (s + u) / 2 for s, u in zip(perf_success["Oracle"], perf_uptime["Oracle"])
-        ]
-        ml_efficiency = [
-            (s + u) / 2 for s, u in zip(perf_success["ML"], perf_uptime["ML"])
-        ]
-        naive_efficiency = [
-            (s + u) / 2 for s, u in zip(perf_success["Naive"], perf_uptime["Naive"])
-        ]
-
-        ax4.bar(
-            [i - width for i in x],
-            oracle_efficiency,
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax4.bar(x, ml_efficiency, width, label="ML Controllers", color="#A23B72")
-        ax4.bar(
-            [i + width for i in x],
-            naive_efficiency,
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax4.set_title("Performance Efficiency (Success + Uptime)/2")
-        ax4.set_ylabel("Efficiency Score")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(short_names, rotation=45, ha="right")
-        ax4.legend()
-        ax4.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax4)
-
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_4_performance_focused_rewards.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
 
     def create_figure_4_5(self):
-        """Figure 4.5: Carbon-focused reward weights results."""
-        print("Creating Figure 4.5: Carbon-Focused Reward Weights...")
+        """Figure 4.5: Battery Configuration Impact (C1 vs C2)."""
+        print("Creating Figure 4.5: Battery Configuration Impact...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.5: Carbon-Focused Reward Weights (Success=5, Small Miss=7, Large Miss=10, Carbon=15)",
-            fontsize=16,
-            fontweight="bold",
+        if not self.summary_data:
+            self.load_data()
+
+        c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
+        c2_model = "C2_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
+
+        title = "Figure 4.5: Battery Configuration Impact (C1 vs C2)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            [(c1_model, c2_model)],
+            os.path.join(
+                self.output_dir, "figure_4_5_battery_configuration_impact.png"
+            ),
         )
-
-        # Filter carbon-focused models
-        models = list(self.model_configs.keys())
-        carbon_models = [
-            m
-            for m, config in self.model_configs.items()
-            if config["carbon_weight"] == 15
-        ]
-        carbon_indices = [models.index(m) for m in carbon_models]
-
-        # Success rates
-        carbon_success = {
-            "Oracle": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "oracle"
-                ][i]
-                for i in carbon_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "ml"
-                ][i]
-                for i in carbon_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "naive"
-                ][i]
-                for i in carbon_indices
-            ],
-        }
-
-        short_names = [self.model_configs[m]["short_name"] for m in carbon_models]
-        x = list(range(len(short_names)))
-        width = 0.25
-
-        ax1.bar(
-            [i - width for i in x],
-            carbon_success["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax1.bar(x, carbon_success["ML"], width, label="ML Controllers", color="#A23B72")
-        ax1.bar(
-            [i + width for i in x],
-            carbon_success["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax1.set_title("Success Rates")
-        ax1.set_ylabel("Success Rate")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(short_names, rotation=45, ha="right")
-        ax1.legend()
-        ax1.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax1)
-
-        # Total rewards
-        carbon_rewards = {
-            "Oracle": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "oracle"
-                ][i]
-                for i in carbon_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "ml"
-                ][i]
-                for i in carbon_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "naive"
-                ][i]
-                for i in carbon_indices
-            ],
-        }
-
-        ax2.bar(
-            [i - width for i in x],
-            carbon_rewards["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax2.bar(x, carbon_rewards["ML"], width, label="ML Controllers", color="#A23B72")
-        ax2.bar(
-            [i + width for i in x],
-            carbon_rewards["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax2.set_title("Total Utility Rewards")
-        ax2.set_ylabel("Total Reward")
-        ax2.set_xticks(x)
-        ax2.set_xticklabels(short_names, rotation=45, ha="right")
-        ax2.legend()
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-
-        # Uptime metrics
-        carbon_uptime = {
-            "Oracle": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "oracle"
-                ][i]
-                for i in carbon_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "ml"
-                ][i]
-                for i in carbon_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "naive"
-                ][i]
-                for i in carbon_indices
-            ],
-        }
-
-        ax3.bar(
-            [i - width for i in x],
-            carbon_uptime["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax3.bar(x, carbon_uptime["ML"], width, label="ML Controllers", color="#A23B72")
-        ax3.bar(
-            [i + width for i in x],
-            carbon_uptime["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax3.set_title("Uptime Metrics")
-        ax3.set_ylabel("Uptime Score")
-        ax3.set_xticks(x)
-        ax3.set_xticklabels(short_names, rotation=45, ha="right")
-        ax3.legend()
-        ax3.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax3)
-
-        # Carbon efficiency (inverse of negative rewards)
-        oracle_carbon_eff = [max(0, -r / 100) for r in carbon_rewards["Oracle"]]
-        ml_carbon_eff = [max(0, -r / 100) for r in carbon_rewards["ML"]]
-        naive_carbon_eff = [max(0, -r / 100) for r in carbon_rewards["Naive"]]
-
-        ax4.bar(
-            [i - width for i in x],
-            oracle_carbon_eff,
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax4.bar(x, ml_carbon_eff, width, label="ML Controllers", color="#A23B72")
-        ax4.bar(
-            [i + width for i in x],
-            naive_carbon_eff,
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax4.set_title("Carbon Efficiency Score")
-        ax4.set_ylabel("Efficiency Score")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(short_names, rotation=45, ha="right")
-        ax4.legend()
-        ax4.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.1%}"))
-
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_5_carbon_focused_rewards.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
 
     def create_figure_4_6(self):
-        """Figure 4.6: Large battery configuration results."""
-        print("Creating Figure 4.6: Large Battery Configuration...")
+        """Figure 4.6: Seasonal Variation Analysis."""
+        print("Creating Figure 4.6: Seasonal Variation Analysis...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.6: Large Battery Configuration (610 mWh, 0.000269 mWh/s)",
-            fontsize=16,
-            fontweight="bold",
-        )
+        if not self.summary_data:
+            self.load_data()
 
-        # Filter large battery models
-        models = list(self.model_configs.keys())
-        large_battery_models = [
-            m
-            for m, config in self.model_configs.items()
-            if config["battery_capacity"] == 610
-        ]
-        large_battery_indices = [models.index(m) for m in large_battery_models]
-
-        # Success rates
-        large_success = {
-            "Oracle": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "oracle"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "ml"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "naive"
-                ][i]
-                for i in large_battery_indices
-            ],
-        }
-
-        short_names = [
-            self.model_configs[m]["short_name"] for m in large_battery_models
-        ]
-        x = list(range(len(short_names)))
-        width = 0.25
-
-        ax1.bar(
-            [i - width for i in x],
-            large_success["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax1.bar(x, large_success["ML"], width, label="ML Controllers", color="#A23B72")
-        ax1.bar(
-            [i + width for i in x],
-            large_success["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax1.set_title("Success Rates")
-        ax1.set_ylabel("Success Rate")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(short_names, rotation=45, ha="right")
-        ax1.legend()
-        ax1.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax1)
-
-        # Total rewards
-        large_rewards = {
-            "Oracle": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "oracle"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "ml"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "naive"
-                ][i]
-                for i in large_battery_indices
-            ],
-        }
-
-        ax2.bar(
-            [i - width for i in x],
-            large_rewards["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax2.bar(x, large_rewards["ML"], width, label="ML Controllers", color="#A23B72")
-        ax2.bar(
-            [i + width for i in x],
-            large_rewards["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax2.set_title("Total Utility Rewards")
-        ax2.set_ylabel("Total Reward")
-        ax2.set_xticks(x)
-        ax2.set_xticklabels(short_names, rotation=45, ha="right")
-        ax2.legend()
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-
-        # Uptime metrics
-        large_uptime = {
-            "Oracle": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "oracle"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "ml"
-                ][i]
-                for i in large_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "naive"
-                ][i]
-                for i in large_battery_indices
-            ],
-        }
-
-        ax3.bar(
-            [i - width for i in x],
-            large_uptime["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax3.bar(x, large_uptime["ML"], width, label="ML Controllers", color="#A23B72")
-        ax3.bar(
-            [i + width for i in x],
-            large_uptime["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax3.set_title("Uptime Metrics")
-        ax3.set_ylabel("Uptime Score")
-        ax3.set_xticks(x)
-        ax3.set_xticklabels(short_names, rotation=45, ha="right")
-        ax3.legend()
-        ax3.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax3)
-
-        # Energy utilization (based on uptime and rewards)
-        oracle_util = [
-            (s + u) / 2 for s, u in zip(large_success["Oracle"], large_uptime["Oracle"])
-        ]
-        ml_util = [(s + u) / 2 for s, u in zip(large_success["ML"], large_uptime["ML"])]
-        naive_util = [
-            (s + u) / 2 for s, u in zip(large_success["Naive"], large_uptime["Naive"])
+        # Select representative models for seasonal analysis
+        seasonal_models = [
+            "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth",
+            "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth",
+            "C3_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap610_rate0.000269_best_model.pth",
         ]
 
-        ax4.bar(
-            [i - width for i in x],
-            oracle_util,
-            width,
-            label="Oracle",
-            color="#2E86AB",
+        title = "Figure 4.6: Seasonal Variation Analysis"
+        self.create_three_panel_horizontal_layout(
+            title,
+            seasonal_models,
+            os.path.join(self.output_dir, "figure_4_6_seasonal_variation.png"),
         )
-        ax4.bar(x, ml_util, width, label="ML Controllers", color="#A23B72")
-        ax4.bar(
-            [i + width for i in x],
-            naive_util,
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax4.set_title("Energy Utilization Efficiency")
-        ax4.set_ylabel("Utilization Score")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(short_names, rotation=45, ha="right")
-        ax4.legend()
-        ax4.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax4)
-
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_6_large_battery_config.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
 
     def create_figure_4_7(self):
-        """Figure 4.7: Small battery configuration results."""
-        print("Creating Figure 4.7: Small Battery Configuration...")
+        """Figure 4.7: Controller Performance Gaps."""
+        print("Creating Figure 4.7: Controller Performance Gaps...")
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        fig.suptitle(
-            "Figure 4.7: Small Battery Configuration (105 mWh, 0.001598 mWh/s)",
-            fontsize=16,
-            fontweight="bold",
+        if not self.summary_data:
+            self.load_data()
+
+        # Use all models to show comprehensive performance gaps
+        all_models = self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+
+        title = "Figure 4.7: Controller Performance Gaps (Oracle vs ML vs Naive)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            all_models,
+            os.path.join(self.output_dir, "figure_4_7_performance_gaps.png"),
         )
 
-        # Filter small battery models
-        models = list(self.model_configs.keys())
+    def create_figure_4_8(self):
+        """Figure 4.8: Reward Weight Sensitivity (carb7 vs carb15 groups)."""
+        print("Creating Figure 4.8: Reward Weight Sensitivity...")
+
+        if not self.summary_data:
+            self.load_data()
+
+        # Group by carbon weight
+        carb7_models = [
+            m
+            for m in self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+            if "carb7" in m
+        ]
+        carb15_models = [
+            m
+            for m in self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+            if "carb15" in m
+        ]
+
+        title = "Figure 4.8: Reward Weight Sensitivity (Performance vs Carbon Focused)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            carb7_models[:2] + carb15_models[:2],  # Limit to prevent overcrowding
+            os.path.join(self.output_dir, "figure_4_8_reward_sensitivity.png"),
+        )
+
+    def create_figure_4_9(self):
+        """Figure 4.9: Energy Utilization Analysis (battery size comparison)."""
+        print("Creating Figure 4.9: Energy Utilization Analysis...")
+
+        if not self.summary_data:
+            self.load_data()
+
+        # Group by battery size
         small_battery_models = [
             m
-            for m, config in self.model_configs.items()
-            if config["battery_capacity"] == 105
+            for m in self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+            if "cap105" in m
         ]
-        small_battery_indices = [models.index(m) for m in small_battery_models]
-
-        # Success rates
-        small_success = {
-            "Oracle": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "oracle"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "ml"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["accuracy_metrics"]["success_rates"][
-                    "naive"
-                ][i]
-                for i in small_battery_indices
-            ],
-        }
-
-        short_names = [
-            self.model_configs[m]["short_name"] for m in small_battery_models
-        ]
-        x = list(range(len(short_names)))
-        width = 0.25
-
-        ax1.bar(
-            [i - width for i in x],
-            small_success["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax1.bar(x, small_success["ML"], width, label="ML Controllers", color="#A23B72")
-        ax1.bar(
-            [i + width for i in x],
-            small_success["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax1.set_title("Success Rates")
-        ax1.set_ylabel("Success Rate")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(short_names, rotation=45, ha="right")
-        ax1.legend()
-        ax1.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax1)
-
-        # Total rewards
-        small_rewards = {
-            "Oracle": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "oracle"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "ml"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["utility_comparison"]["total_rewards"][
-                    "naive"
-                ][i]
-                for i in small_battery_indices
-            ],
-        }
-
-        ax2.bar(
-            [i - width for i in x],
-            small_rewards["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax2.bar(x, small_rewards["ML"], width, label="ML Controllers", color="#A23B72")
-        ax2.bar(
-            [i + width for i in x],
-            small_rewards["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax2.set_title("Total Utility Rewards")
-        ax2.set_ylabel("Total Reward")
-        ax2.set_xticks(x)
-        ax2.set_xticklabels(short_names, rotation=45, ha="right")
-        ax2.legend()
-        ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
-        ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-
-        # Uptime metrics
-        small_uptime = {
-            "Oracle": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "oracle"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "ML": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "ml"
-                ][i]
-                for i in small_battery_indices
-            ],
-            "Naive": [
-                self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                    "naive"
-                ][i]
-                for i in small_battery_indices
-            ],
-        }
-
-        ax3.bar(
-            [i - width for i in x],
-            small_uptime["Oracle"],
-            width,
-            label="Oracle",
-            color="#2E86AB",
-        )
-        ax3.bar(x, small_uptime["ML"], width, label="ML Controllers", color="#A23B72")
-        ax3.bar(
-            [i + width for i in x],
-            small_uptime["Naive"],
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax3.set_title("Uptime Metrics")
-        ax3.set_ylabel("Uptime Score")
-        ax3.set_xticks(x)
-        ax3.set_xticklabels(short_names, rotation=45, ha="right")
-        ax3.legend()
-        ax3.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax3)
-
-        # Power efficiency (inversely related to charging frequency)
-        oracle_efficiency = [
-            s * u for s, u in zip(small_success["Oracle"], small_uptime["Oracle"])
-        ]
-        ml_efficiency = [s * u for s, u in zip(small_success["ML"], small_uptime["ML"])]
-        naive_efficiency = [
-            s * u for s, u in zip(small_success["Naive"], small_uptime["Naive"])
+        large_battery_models = [
+            m
+            for m in self.summary_data["graph_data"]["accuracy_metrics"]["models"]
+            if "cap610" in m
         ]
 
-        ax4.bar(
-            [i - width for i in x],
-            oracle_efficiency,
-            width,
-            label="Oracle",
-            color="#2E86AB",
+        title = "Figure 4.9: Energy Utilization Analysis (Battery Size Impact)"
+        self.create_three_panel_horizontal_layout(
+            title,
+            small_battery_models[:2]
+            + large_battery_models[:2],  # Limit to prevent overcrowding
+            os.path.join(self.output_dir, "figure_4_9_energy_utilization.png"),
         )
-        ax4.bar(x, ml_efficiency, width, label="ML Controllers", color="#A23B72")
-        ax4.bar(
-            [i + width for i in x],
-            naive_efficiency,
-            width,
-            label="Naive",
-            color="#F18F01",
-        )
-        ax4.set_title("Power Efficiency (Success × Uptime)")
-        ax4.set_ylabel("Efficiency Score")
-        ax4.set_xticks(x)
-        ax4.set_xticklabels(short_names, rotation=45, ha="right")
-        ax4.legend()
-        ax4.set_ylim(0, 1.1)
-        self.format_percentage_axis(ax4)
 
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(self.output_dir, "figure_4_7_small_battery_config.png"),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        plt.close()
+    def generate_all_charts(self):
+        """Generate all required charts for Section 4 (GRAPH.md implementation)."""
+        print("Generating all charts for Section 4...")
+
+        # Ensure data is loaded first
+        if not self.summary_data:
+            self.load_data()
+
+        # Section 4.3: Overall Comparison
+        self.create_figure_4_1()
+
+        # Section 4.4: Targeted Ablation Studies
+        self.create_figure_4_2()  # Accuracy Impact
+        self.create_figure_4_3()  # Latency Impact
+        self.create_figure_4_4()  # Reward Structure Impact
+        self.create_figure_4_5()  # Battery Configuration Impact
+        self.create_figure_4_6()  # Seasonal Variation
+        self.create_figure_4_7()  # Performance Gaps
+        self.create_figure_4_8()  # Reward Weight Sensitivity
+        self.create_figure_4_9()  # Energy Utilization
+
+        print(f"All charts saved to {self.output_dir}")
 
 
 def main():
-    """Main function to run the analysis."""
+    """Main function to run analysis."""
     try:
         # Create analyzer and generate charts
         analyzer = ResultsAnalyzer()
