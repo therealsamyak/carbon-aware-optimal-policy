@@ -601,41 +601,8 @@ class ResultsAnalyzer:
         plt.close()
 
     def create_figure_4_2(self):
-        """Figure 4.2: Accuracy Threshold Impact (C1 vs C4)."""
-        print("Creating Figure 4.2: Accuracy Threshold Impact...")
-
-        if not self.summary_data:
-            self.load_data()
-
-        # Use our pair identification algorithm
-        accuracy_pairs = self.find_ablation_pairs(self.controller_configs, "accuracy")
-
-        if "accuracy" in accuracy_pairs:
-            model1, model2 = accuracy_pairs["accuracy"]
-            title = f"Figure 4.2: Accuracy Threshold Impact ({self._extract_controller_name(model1)} vs {self._extract_controller_name(model2)})"
-            self.create_three_panel_horizontal_layout(
-                title,
-                [(model1, model2)],
-                os.path.join(
-                    self.output_dir, "figure_4_2_accuracy_threshold_impact.png"
-                ),
-            )
-        else:
-            # Fallback: manually use C1 vs C4
-            c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
-            c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
-            title = "Figure 4.2: Accuracy Threshold Impact (C1 vs C4)"
-            self.create_three_panel_horizontal_layout(
-                title,
-                [(c1_model, c4_model)],
-                os.path.join(
-                    self.output_dir, "figure_4_2_accuracy_threshold_impact.png"
-                ),
-            )
-
-    def create_figure_4_3(self):
-        """Figure 4.3: Latency Impact (C1 vs C4)."""
-        print("Creating Figure 4.3: Latency Impact...")
+        """Figure 4.2: Accuracy and Latency Impact (C1 vs C4)."""
+        print("Creating Figure 4.2: Accuracy and Latency Impact...")
 
         if not self.summary_data:
             self.load_data()
@@ -643,16 +610,16 @@ class ResultsAnalyzer:
         c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
         c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
 
-        title = "Figure 4.3: Latency Impact (C1 vs C4)"
+        title = "Figure 4.2: Accuracy and Latency Impact (C1 vs C4)"
         self.create_three_panel_horizontal_layout(
             title,
             [(c1_model, c4_model)],
-            os.path.join(self.output_dir, "figure_4_3_latency_impact.png"),
+            os.path.join(self.output_dir, "figure_4_2_accuracy_latency_impact.png"),
         )
 
-    def create_figure_4_4(self):
-        """Figure 4.4: Reward Structure Impact (C4 vs C3)."""
-        print("Creating Figure 4.4: Reward Structure Impact...")
+    def create_figure_4_3(self):
+        """Figure 4.3: Reward Structure Impact (C4 vs C3)."""
+        print("Creating Figure 4.3: Reward Structure Impact...")
 
         if not self.summary_data:
             self.load_data()
@@ -660,16 +627,16 @@ class ResultsAnalyzer:
         c4_model = "C4_controller_acc0.819_lat0.006_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
         c3_model = "C3_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap610_rate0.000269_best_model.pth"
 
-        title = "Figure 4.4: Reward Structure Impact (C4 vs C3)"
+        title = "Figure 4.3: Reward Structure Impact (C4 vs C3)"
         self.create_three_panel_horizontal_layout(
             title,
             [(c4_model, c3_model)],
-            os.path.join(self.output_dir, "figure_4_4_reward_structure_impact.png"),
+            os.path.join(self.output_dir, "figure_4_3_reward_structure_impact.png"),
         )
 
-    def create_figure_4_5(self):
-        """Figure 4.5: Battery Configuration Impact (C1 vs C2)."""
-        print("Creating Figure 4.5: Battery Configuration Impact...")
+    def create_figure_4_4(self):
+        """Figure 4.4: Battery Configuration Impact (C1 vs C2)."""
+        print("Creating Figure 4.4: Battery Configuration Impact...")
 
         if not self.summary_data:
             self.load_data()
@@ -677,18 +644,18 @@ class ResultsAnalyzer:
         c1_model = "C1_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap105_rate0.001598_best_model.pth"
         c2_model = "C2_controller_acc0.95_lat0.015_succ20_small5_large8_carb7_cap610_rate0.000269_best_model.pth"
 
-        title = "Figure 4.5: Battery Configuration Impact (C1 vs C2)"
+        title = "Figure 4.4: Battery Configuration Impact (C1 vs C2)"
         self.create_three_panel_horizontal_layout(
             title,
             [(c1_model, c2_model)],
             os.path.join(
-                self.output_dir, "figure_4_5_battery_configuration_impact.png"
+                self.output_dir, "figure_4_4_battery_configuration_impact.png"
             ),
         )
 
-    def create_figure_4_6(self):
-        """Figure 4.6: Seasonal Variation Analysis."""
-        print("Creating Figure 4.6: Seasonal Variation Analysis...")
+    def create_figure_4_5(self):
+        """Figure 4.5: Seasonal Variation Analysis."""
+        print("Creating Figure 4.5: Seasonal Variation Analysis...")
 
         if not self.summary_data:
             self.load_data()
@@ -700,16 +667,16 @@ class ResultsAnalyzer:
             "C3_controller_acc0.819_lat0.006_succ5_small7_large10_carb15_cap610_rate0.000269_best_model.pth",
         ]
 
-        title = "Figure 4.6: Seasonal Variation Analysis"
+        title = "Figure 4.5: Seasonal Variation Analysis"
         self.create_three_panel_horizontal_layout(
             title,
             seasonal_models,
-            os.path.join(self.output_dir, "figure_4_6_seasonal_variation.png"),
+            os.path.join(self.output_dir, "figure_4_5_seasonal_variation.png"),
         )
 
-    def create_figure_4_7(self):
-        """Figure 4.7: Controller Performance Gaps."""
-        print("Creating Figure 4.7: Controller Performance Gaps...")
+    def create_figure_4_6(self):
+        """Figure 4.6: Controller Performance Gaps."""
+        print("Creating Figure 4.6: Controller Performance Gaps...")
 
         if not self.summary_data:
             self.load_data()
@@ -717,16 +684,16 @@ class ResultsAnalyzer:
         # Use all models to show comprehensive performance gaps
         all_models = self.summary_data["graph_data"]["accuracy_metrics"]["models"]
 
-        title = "Figure 4.7: Controller Performance Gaps (Oracle vs ML vs Naive)"
+        title = "Figure 4.6: Controller Performance Gaps (Oracle vs ML vs Naive)"
         self.create_three_panel_horizontal_layout(
             title,
             all_models,
-            os.path.join(self.output_dir, "figure_4_7_performance_gaps.png"),
+            os.path.join(self.output_dir, "figure_4_6_performance_gaps.png"),
         )
 
-    def create_figure_4_8(self):
-        """Figure 4.8: Reward Weight Sensitivity (carb7 vs carb15 groups)."""
-        print("Creating Figure 4.8: Reward Weight Sensitivity...")
+    def create_figure_4_7(self):
+        """Figure 4.7: Reward Weight Sensitivity (carb7 vs carb15 groups)."""
+        print("Creating Figure 4.7: Reward Weight Sensitivity...")
 
         if not self.summary_data:
             self.load_data()
@@ -743,16 +710,16 @@ class ResultsAnalyzer:
             if "carb15" in m
         ]
 
-        title = "Figure 4.8: Reward Weight Sensitivity (Performance vs Carbon Focused)"
+        title = "Figure 4.7: Reward Weight Sensitivity (Performance vs Carbon Focused)"
         self.create_three_panel_horizontal_layout(
             title,
             carb7_models[:2] + carb15_models[:2],  # Limit to prevent overcrowding
-            os.path.join(self.output_dir, "figure_4_8_reward_sensitivity.png"),
+            os.path.join(self.output_dir, "figure_4_7_reward_sensitivity.png"),
         )
 
-    def create_figure_4_9(self):
-        """Figure 4.9: Energy Utilization Analysis (battery size comparison)."""
-        print("Creating Figure 4.9: Energy Utilization Analysis...")
+    def create_figure_4_8(self):
+        """Figure 4.8: Energy Utilization Analysis (battery size comparison)."""
+        print("Creating Figure 4.8: Energy Utilization Analysis...")
 
         if not self.summary_data:
             self.load_data()
@@ -769,12 +736,12 @@ class ResultsAnalyzer:
             if "cap610" in m
         ]
 
-        title = "Figure 4.9: Energy Utilization Analysis (Battery Size Impact)"
+        title = "Figure 4.8: Energy Utilization Analysis (Battery Size Impact)"
         self.create_three_panel_horizontal_layout(
             title,
             small_battery_models[:2]
             + large_battery_models[:2],  # Limit to prevent overcrowding
-            os.path.join(self.output_dir, "figure_4_9_energy_utilization.png"),
+            os.path.join(self.output_dir, "figure_4_8_energy_utilization.png"),
         )
 
     def generate_all_charts(self):
@@ -789,14 +756,13 @@ class ResultsAnalyzer:
         self.create_figure_4_1()
 
         # Section 4.4: Targeted Ablation Studies
-        self.create_figure_4_2()  # Accuracy Impact
-        self.create_figure_4_3()  # Latency Impact
-        self.create_figure_4_4()  # Reward Structure Impact
-        self.create_figure_4_5()  # Battery Configuration Impact
-        self.create_figure_4_6()  # Seasonal Variation
-        self.create_figure_4_7()  # Performance Gaps
-        self.create_figure_4_8()  # Reward Weight Sensitivity
-        self.create_figure_4_9()  # Energy Utilization
+        self.create_figure_4_2()  # Accuracy and Latency Impact
+        self.create_figure_4_3()  # Reward Structure Impact
+        self.create_figure_4_4()  # Battery Configuration Impact
+        self.create_figure_4_5()  # Seasonal Variation
+        self.create_figure_4_6()  # Performance Gaps
+        self.create_figure_4_7()  # Reward Weight Sensitivity
+        self.create_figure_4_8()  # Energy Utilization
 
         print(f"All charts saved to {self.output_dir}")
 

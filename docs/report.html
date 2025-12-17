@@ -93,27 +93,24 @@
                 <a href="#ablation-studies">4.4 Ablation Studies</a>
                 <ul class="toc-sublinks">
                   <li>
-                    <a href="#4.4.1-accuracy-threshold-ablation-study">4.4.1 Accuracy Threshold</a>
+                    <a href="#4.4.1-accuracy-latency-impact">4.4.1 Accuracy & Latency Impact</a>
                   </li>
+                  <li><a href="#4.4.2-reward-weights-ablation-study">4.4.2 Reward Weights</a></li>
                   <li>
-                    <a href="#4.4.2-latency-threshold-ablation-study">4.4.2 Latency Threshold</a>
-                  </li>
-                  <li><a href="#4.4.3-reward-weights-ablation-study">4.4.3 Reward Weights</a></li>
-                  <li>
-                    <a href="#4.4.4-battery-configuration-ablation-study"
-                      >4.4.4 Battery Configuration</a
+                    <a href="#4.4.3-battery-configuration-ablation-study"
+                      >4.4.3 Battery Configuration</a
                     >
                   </li>
                   <li>
-                    <a href="#4.4.5-seasonal-variation-ablation-study">4.4.5 Seasonal Variation</a>
+                    <a href="#4.4.4-seasonal-variation-ablation-study">4.4.4 Seasonal Variation</a>
                   </li>
                   <li>
-                    <a href="#4.4.6-controller-comparison-ablation-study"
-                      >4.4.6 Controller Performance Gaps</a
+                    <a href="#4.4.5-controller-comparison-ablation-study"
+                      >4.4.5 Controller Performance Gaps</a
                     >
                   </li>
                   <li>
-                    <a href="#4.4.7-reward-weight-sensitivity">4.4.7 Reward Weight Sensitivity</a>
+                    <a href="#4.4.6-reward-weight-sensitivity">4.4.6 Reward Weight Sensitivity</a>
                   </li>
                 </ul>
               </li>
@@ -1483,6 +1480,113 @@ generate_comparative_analysis(controllers)</code></pre>
               showing average performance of Oracle, ML, and Naive controllers.
             </p>
 
+            <h4 id="performance-evaluation-metrics">4.3.1 Performance Evaluation Metrics</h4>
+            <p>
+              We evaluate controller performance using three complementary metrics that capture
+              different aspects of system behavior: success rate classification, weighted reward
+              function, and feasibility-normalized effective uptime.
+            </p>
+
+            <h5>Success Rate Classification</h5>
+            <p>
+              At each timestep, actions are classified based on whether they meet user requirements
+              and system constraints:
+            </p>
+
+            \[ \begin{aligned} \text{Success} &= \mathbb{I}[a_t \neq \text{NO\_MODEL} \land
+            \text{acc}(a_t) \geq \theta_{\text{acc}} \land \text{lat}(a_t) \leq \theta_{\text{lat}}]
+            \\ \text{Small Miss} &= \mathbb{I}[a_t \neq \text{NO\_MODEL} \land (\text{acc}(a_t) <
+            \theta_{\text{acc}} \lor \text{lat}(a_t) > \theta_{\text{lat}})] \\ \text{Large Miss} &=
+            \mathbb{I}[a_t = \text{NO\_MODEL}] \end{aligned} \]
+
+            <pre><code>IF action.model == NO_MODEL THEN
+    large_miss ← 1
+ELSE
+    meets_accuracy ← model_profile.accuracy ≥ accuracy_threshold
+    meets_latency ← model_profile.latency ≤ latency_threshold
+    
+    IF meets_accuracy AND meets_latency THEN
+        success ← 1
+    ELSE
+        small_miss ← 1
+    END IF
+END IF</code></pre>
+
+            <p>
+              Implementation:
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/utils/core.py"
+                target="_blank"
+                >simulation/utils/core.py:125-142</a
+              >
+            </p>
+
+            <h5>Total Reward Function</h5>
+            <p>Combines success rates with carbon cost into a single utility metric:</p>
+
+            \[ R_t = W \cdot \text{Success} - X \cdot \text{Small Miss} - Y \cdot \text{Large Miss}
+            - Z \cdot \Delta_d \]
+
+            <pre><code>// Calculate carbon cost (charging only, energy use is carbon-free)
+charging_cost ← action.charge × charge_rate × task_interval × dirty_energy_fraction
+delta_d ← charging_cost  // carbon multiplier already included
+
+// Calculate weighted reward
+reward ← W × success - X × small_miss - Y × large_miss - Z × delta_d</code></pre>
+
+            <p>
+              Implementation:
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/utils/core.py"
+                target="_blank"
+                >simulation/utils/core.py:162-169</a
+              >
+            </p>
+
+            <h5>Feasibility-Normalized Effective Uptime</h5>
+            <p>
+              Measures the quality of model selection relative to the best feasible option at each
+              timestep:
+            </p>
+
+            \[ U = \frac{1}{T} \sum_{t=1}^{T} u_t, \quad \text{where} \quad u_t = \begin{cases} 0 &
+            \text{if } a_t = \text{NO\_MODEL} \\ \frac{\text{acc}(a_t)}{\max_{m \in \mathcal{F}_t}
+            \text{acc}(m)} & \text{otherwise} \end{cases} \]
+
+            <pre><code>FOR each timestep t DO
+    IF action.model == NO_MODEL THEN
+        uptime_score[t] ← 0
+    ELSE
+        // Find all models feasible with current battery
+        feasible_models ← []
+        FOR each model m DO
+            IF battery_level ≥ energy_per_inference(m) THEN
+                feasible_models.append(m)
+            END IF
+        END FOR
+        
+        IF feasible_models not empty THEN
+            best_accuracy ← max(accuracy(m) for m in feasible_models)
+            selected_accuracy ← accuracy(action.model)
+            uptime_score[t] ← selected_accuracy / best_accuracy
+        ELSE
+            uptime_score[t] ← 0
+        END IF
+    END IF
+END FOR
+
+// Return average over entire horizon
+RETURN sum(uptime_score) / len(uptime_score)</code></pre>
+
+            <p>
+              Implementation:
+              <a
+                href="https://github.com/therealsamyak/ECM202A_2025Fall_Project_2/blob/main/simulation/batch_run.py"
+                target="_blank"
+                >simulation/batch_run.py:151-185</a
+              >
+            </p>
+
             <h4>Baseline Performance Metrics</h4>
             <p>Average controller performance across all configurations:</p>
             <figure class="chart-placeholder">
@@ -1503,39 +1607,31 @@ generate_comparative_analysis(controllers)</code></pre>
               differing by exactly ONE parameter using the consistent 3-panel layout.
             </p>
 
-            <h4 id="4.4.1-accuracy-threshold-ablation-study">4.4.1 Accuracy Threshold Impact</h4>
+            <h4 id="4.4.1-accuracy-latency-impact">4.4.1 Accuracy & Latency Impact</h4>
             <p>
-              Isolates the effect of accuracy requirements (0.819 vs 0.95) by comparing controllers
-              C1 (acc=0.95) vs C4 (acc=0.819) with identical other parameters.
+              Isolates the effect of user requirement tuples (accuracy, latency) by comparing two
+              configurations: (0.819, 0.006s) vs (0.95, 0.015s). This study examines how different
+              combinations of accuracy and latency requirements affect controller performance when
+              traded off as a pair rather than individually.
+            </p>
+            <p>
+              The comparison uses controllers C1 (acc=0.95, lat=0.015s) vs C4 (acc=0.819,
+              lat=0.006s) with identical other parameters to understand the trade-off between
+              stricter accuracy requirements and more lenient latency constraints versus the
+              opposite configuration.
             </p>
             <figure class="chart-placeholder">
               <img
                 src="figure_4_2_accuracy_threshold_impact.png"
-                alt="Accuracy Threshold Impact"
+                alt="Accuracy & Latency Impact"
                 style="max-width: 100%; height: auto;"
               />
               <figcaption>
-                <p><strong>Figure 4.2:</strong> Accuracy Threshold Impact (C1 vs C4)</p>
+                <p><strong>Figure 4.2:</strong> Accuracy & Latency Impact (C1 vs C4)</p>
               </figcaption>
             </figure>
 
-            <h4 id="4.4.2-latency-threshold-ablation-study">4.4.2 Latency Impact</h4>
-            <p>
-              Isolates effect of latency constraints (0.006s vs 0.015s) by comparing controllers C1
-              (lat=0.015s) vs C4 (lat=0.006s) with identical other parameters.
-            </p>
-            <figure class="chart-placeholder">
-              <img
-                src="figure_4_3_latency_impact.png"
-                alt="Latency Impact"
-                style="max-width: 100%; height: auto;"
-              />
-              <figcaption>
-                <p><strong>Figure 4.3:</strong> Latency Impact (C1 vs C4)</p>
-              </figcaption>
-            </figure>
-
-            <h4 id="4.4.3-reward-weights-ablation-study">4.4.3 Reward Structure Impact</h4>
+            <h4 id="4.4.2-reward-weights-ablation-study">4.4.2 Reward Structure Impact</h4>
             <p>
               Isolates effect of reward weights by comparing controllers C4 (carb=7,
               performance-focused) vs C3 (carb=15, carbon-focused) with identical system parameters.
@@ -1551,8 +1647,8 @@ generate_comparative_analysis(controllers)</code></pre>
               </figcaption>
             </figure>
 
-            <h4 id="4.4.4-battery-configuration-ablation-study">
-              4.4.4 Battery Configuration Impact
+            <h4 id="4.4.3-battery-configuration-ablation-study">
+              4.4.3 Battery Configuration Impact
             </h4>
             <p>
               Isolates effect of hardware constraints by comparing controllers C1 (105 mWh, 0.001598
@@ -1569,7 +1665,7 @@ generate_comparative_analysis(controllers)</code></pre>
               </figcaption>
             </figure>
 
-            <h4 id="4.4.5-seasonal-variation-ablation-study">4.4.5 Seasonal Variation Analysis</h4>
+            <h4 id="4.4.4-seasonal-variation-ablation-study">4.4.4 Seasonal Variation Analysis</h4>
             <p>
               Analyzes performance patterns across 4 seasons (winter, spring, summer, fall) with
               diverse controller configurations to understand energy data impact.
@@ -1585,8 +1681,8 @@ generate_comparative_analysis(controllers)</code></pre>
               </figcaption>
             </figure>
 
-            <h4 id="4.4.6-controller-comparison-ablation-study">
-              4.4.6 Controller Performance Gaps
+            <h4 id="4.4.5-controller-comparison-ablation-study">
+              4.4.5 Controller Performance Gaps
             </h4>
             <p>
               Comprehensive comparison of Oracle vs ML vs Naive controllers across all model
@@ -1603,7 +1699,7 @@ generate_comparative_analysis(controllers)</code></pre>
               </figcaption>
             </figure>
 
-            <h4 id="4.4.7-reward-weight-sensitivity">4.4.7 Reward Weight Sensitivity</h4>
+            <h4 id="4.4.6-reward-weight-sensitivity">4.4.6 Reward Weight Sensitivity</h4>
             <p>
               Compares performance-focused (carb7) vs carbon-focused (carb15) optimization across
               different hardware configurations to understand objective function impact.
