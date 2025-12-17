@@ -355,7 +355,7 @@ class ResultsAnalyzer:
     def create_three_panel_horizontal_layout(
         self, title: str, model_data: List, save_path: str
     ):
-        """Create consistent horizontal 3-panel layout (Accuracy | Utility | Uptime)."""
+        """Create consistent horizontal 3-panel layout with controllers as groups."""
         if not self.summary_data:
             print("Warning: No summary data available for figure generation")
             return
@@ -374,163 +374,122 @@ class ResultsAnalyzer:
         # Limit to first few models to prevent overcrowding
         models_to_show = all_models[:4]
 
-        # Controller color mapping
-        controller_colors = {
-            "C1": "#1f77b4",  # Blue
-            "C2": "#ff7f0e",  # Orange
-            "C3": "#2ca02c",  # Green
-            "C4": "#d62728",  # Red
-            "C5": "#9467bd",  # Purple
-            "C6": "#8c564b",  # Brown
-            "C7": "#e377c2",  # Pink
-            "C8": "#7f7f7f",  # Gray
+        # Algorithm color mapping
+        algorithm_colors = {
+            "oracle": "#2E86AB",  # Blue
+            "ml": "#A23B72",  # Purple
+            "naive": "#F18F01",  # Orange
         }
 
-        # Calculate bar positions for grouping
-        num_models = len(models_to_show)
+        # Calculate bar positions for controller grouping
         bar_width = 0.25
-        group_width = bar_width * num_models
 
-        for i, model_file in enumerate(models_to_show):
-            try:
-                model_index = self.summary_data["graph_data"]["accuracy_metrics"][
-                    "models"
-                ].index(model_file)
+        # Get unique controller names for x-axis labels
+        controller_names = []
+        for model_file in models_to_show:
+            controller_names.append(self._extract_controller_name(model_file))
 
-                # Extract controller name for display
-                controller_name = self._extract_controller_name(model_file)
-                controller_color = controller_colors.get(controller_name, "#333333")
+        # Create positions for each controller group
+        x_positions = list(range(len(controller_names)))
 
-                # Calculate x positions for this controller's bars
-                x_oracle = [0 - group_width / 2 + i * bar_width]
-                x_ml = [1 - group_width / 2 + i * bar_width]
-                x_naive = [2 - group_width / 2 + i * bar_width]
+        # Plot data for each algorithm type
+        for algorithm in ["oracle", "ml", "naive"]:
+            accuracy_values = []
+            utility_values = []
+            uptime_values = []
 
-                # Panel 1: Accuracy Metrics
-                success_rates = [
-                    self.summary_data["graph_data"]["accuracy_metrics"][
-                        "success_rates"
-                    ]["oracle"][model_index],
-                    self.summary_data["graph_data"]["accuracy_metrics"][
-                        "success_rates"
-                    ]["ml"][model_index],
-                    self.summary_data["graph_data"]["accuracy_metrics"][
-                        "success_rates"
-                    ]["naive"][model_index],
-                ]
+            for model_file in models_to_show:
+                try:
+                    model_index = self.summary_data["graph_data"]["accuracy_metrics"][
+                        "models"
+                    ].index(model_file)
 
-                ax1.bar(
-                    x_oracle[0],
-                    success_rates[0],
-                    bar_width,
-                    label=f"{controller_name} (Oracle)",
-                    color=controller_color,
-                    alpha=0.8,
-                )
-                ax1.bar(
-                    x_ml[0],
-                    success_rates[1],
-                    bar_width,
-                    label=f"{controller_name} (ML)",
-                    color=controller_color,
-                    alpha=0.8,
-                )
-                ax1.bar(
-                    x_naive[0],
-                    success_rates[2],
-                    bar_width,
-                    label=f"{controller_name} (Naive)",
-                    color=controller_color,
-                    alpha=0.8,
-                )
+                    # Get metrics for this algorithm
+                    accuracy_values.append(
+                        self.summary_data["graph_data"]["accuracy_metrics"][
+                            "success_rates"
+                        ][algorithm][model_index]
+                    )
+                    utility_values.append(
+                        self.summary_data["graph_data"]["utility_comparison"][
+                            "total_rewards"
+                        ][algorithm][model_index]
+                    )
+                    uptime_values.append(
+                        self.summary_data["graph_data"]["uptime_metrics"][
+                            "uptime_scores"
+                        ][algorithm][model_index]
+                    )
 
-                # Panel 2: Utility Metrics
-                rewards = [
-                    self.summary_data["graph_data"]["utility_comparison"][
-                        "total_rewards"
-                    ]["oracle"][model_index],
-                    self.summary_data["graph_data"]["utility_comparison"][
-                        "total_rewards"
-                    ]["ml"][model_index],
-                    self.summary_data["graph_data"]["utility_comparison"][
-                        "total_rewards"
-                    ]["naive"][model_index],
-                ]
+                except (ValueError, IndexError, TypeError):
+                    print(f"Warning: Could not process model {model_file}")
+                    accuracy_values.append(0)
+                    utility_values.append(0)
+                    uptime_values.append(0)
 
-                ax2.bar(
-                    x_oracle[0],
-                    rewards[0],
-                    bar_width,
-                    color=controller_color,
-                    alpha=0.8,
-                )
-                ax2.bar(
-                    x_ml[0], rewards[1], bar_width, color=controller_color, alpha=0.8
-                )
-                ax2.bar(
-                    x_naive[0], rewards[2], bar_width, color=controller_color, alpha=0.8
-                )
+            # Calculate x positions for this algorithm's bars (offset within each controller group)
+            offset = (
+                list(algorithm_colors.keys()).index(algorithm) * bar_width - bar_width
+            )
+            x_algo = [x + offset for x in x_positions]
 
-                # Panel 3: Uptime Metrics
-                uptimes = [
-                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                        "oracle"
-                    ][model_index],
-                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                        "ml"
-                    ][model_index],
-                    self.summary_data["graph_data"]["uptime_metrics"]["uptime_scores"][
-                        "naive"
-                    ][model_index],
-                ]
+            # Panel 1: Accuracy Metrics
+            ax1.bar(
+                x_algo,
+                accuracy_values,
+                bar_width,
+                label=algorithm.capitalize(),
+                color=algorithm_colors[algorithm],
+                alpha=0.8,
+            )
 
-                ax3.bar(
-                    x_oracle[0],
-                    uptimes[0],
-                    bar_width,
-                    color=controller_color,
-                    alpha=0.8,
-                )
-                ax3.bar(
-                    x_ml[0], uptimes[1], bar_width, color=controller_color, alpha=0.8
-                )
-                ax3.bar(
-                    x_naive[0], uptimes[2], bar_width, color=controller_color, alpha=0.8
-                )
+            # Panel 2: Utility Metrics
+            ax2.bar(
+                x_algo,
+                utility_values,
+                bar_width,
+                color=algorithm_colors[algorithm],
+                alpha=0.8,
+            )
 
-            except (ValueError, IndexError, TypeError):
-                print(f"Warning: Could not process model {model_file}")
-                continue
+            # Panel 3: Uptime Metrics
+            ax3.bar(
+                x_algo,
+                uptime_values,
+                bar_width,
+                color=algorithm_colors[algorithm],
+                alpha=0.8,
+            )
 
         # Configure Panel 1: Accuracy Metrics
         ax1.set_title("Accuracy Metrics", fontweight="bold")
         ax1.set_ylabel("Success Rate")
-        ax1.set_xticks([0, 1, 2])
-        ax1.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax1.set_xticks(x_positions)
+        ax1.set_xticklabels(controller_names)
         ax1.set_ylim(0, 1.1)
         ax1.grid(True, alpha=0.3)
         self.format_percentage_axis(ax1)
-        ax1.legend()
+        ax1.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
         # Configure Panel 2: Utility Metrics
         ax2.set_title("Utility Metrics", fontweight="bold")
         ax2.set_ylabel("Total Reward")
-        ax2.set_xticks([0, 1, 2])
-        ax2.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax2.set_xticks(x_positions)
+        ax2.set_xticklabels(controller_names)
         ax2.axhline(y=0, color="black", linestyle="-", alpha=0.3)
         ax2.grid(True, alpha=0.3)
         ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: f"{x:.0f}"))
-        ax2.legend()
+        ax2.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
         # Configure Panel 3: Uptime Metrics
         ax3.set_title("Uptime Metrics", fontweight="bold")
         ax3.set_ylabel("Uptime Score")
-        ax3.set_xticks([0, 1, 2])
-        ax3.set_xticklabels(["Oracle", "ML", "Naive"])
+        ax3.set_xticks(x_positions)
+        ax3.set_xticklabels(controller_names)
         ax3.set_ylim(0, 1.1)
         ax3.grid(True, alpha=0.3)
         self.format_percentage_axis(ax3)
-        ax3.legend()
+        ax3.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
         plt.tight_layout()
         plt.savefig(save_path, bbox_inches="tight", dpi=300)

@@ -109,11 +109,11 @@
                   </li>
                   <li>
                     <a href="#4.4.6-controller-comparison-ablation-study"
-                      >4.4.6 Controller Comparison</a
+                      >4.4.6 Controller Performance Gaps</a
                     >
                   </li>
                   <li>
-                    <a href="#4.4.7-model-selection-patterns">4.4.7 Model Selection Patterns</a>
+                    <a href="#4.4.7-reward-weight-sensitivity">4.4.7 Reward Weight Sensitivity</a>
                   </li>
                 </ul>
               </li>
@@ -1156,6 +1156,14 @@ generate_comparative_analysis(controllers)</code></pre>
               >model-profiler/power_profiles.json</a
             >
 
+            <figure class="chart-placeholder">
+              <img
+                src="model_results.png"
+                alt="Model Results Graph"
+                style="max-width: 100%; height: auto;"
+              />
+            </figure>
+
             <div class="table-container">
               <table class="params-table">
                 <thead>
@@ -1469,154 +1477,153 @@ generate_comparative_analysis(controllers)</code></pre>
               <li><strong>Charge Accuracy:</strong> 1.0 (100%)</li>
             </ul>
 
-            <h3 id="model-performance-comparison">4.3 Model Performance Comparison</h3>
+            <h3 id="model-performance-comparison">4.3 Overall Performance Comparison</h3>
             <p>
-              Comprehensive evaluation across all 8 trained models showing performance variations
-              with different parameter configurations.
+              Comprehensive baseline comparison across all 32 simulation runs (8 models × 4 seasons)
+              showing average performance of Oracle, ML, and Naive controllers.
             </p>
 
-            <h4>Overall Performance Summary</h4>
-            <p>Comparison of controller performance across all model variants:</p>
-            <!-- Placeholder for model comparison graph -->
-            <div class="chart-placeholder">
-              <strong>Figure 4.1:</strong> Controller performance comparison across 8 models (Oracle
-              vs Naive vs ML)
-              <ul>
-                <li>Success rates by model configuration</li>
-                <li>Utility rewards by model configuration</li>
-                <li>Uptime metrics by model configuration</li>
-              </ul>
-            </div>
+            <h4>Baseline Performance Metrics</h4>
+            <p>Average controller performance across all configurations:</p>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_1_overall_performance_comparison.png"
+                alt="Overall Performance Comparison"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.1:</strong> Overall Controller Performance Comparison</p>
+              </figcaption>
+            </figure>
 
-            <h3 id="ablation-studies">4.4 Ablation Studies</h3>
+            <h3 id="ablation-studies">4.4 Targeted Ablation Studies</h3>
             <p>
-              Comprehensive ablation studies across all parameter variations to understand their
-              impact on controller performance.
+              Systematic ablation studies with clean parameter isolation to understand individual
+              parameter impacts on controller performance. Each study compares configurations
+              differing by exactly ONE parameter using the consistent 3-panel layout.
             </p>
 
-            <h4 id="4.4.1-accuracy-threshold-ablation-study">4.4.1 Accuracy Threshold</h4>
+            <h4 id="4.4.1-accuracy-threshold-ablation-study">4.4.1 Accuracy Threshold Impact</h4>
             <p>
-              Impact of varying accuracy requirements (0.819 vs 0.95) on controller performance.
+              Isolates the effect of accuracy requirements (0.819 vs 0.95) by comparing controllers
+              C1 (acc=0.95) vs C4 (acc=0.819) with identical other parameters.
             </p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.2:</strong> Success rates by accuracy threshold
-              <ul>
-                <li>Success/Small Miss/Failure breakdown for acc=0.819 models</li>
-                <li>Success/Small Miss/Failure breakdown for acc=0.95 models</li>
-                <li>Controller performance gap by accuracy requirement</li>
-              </ul>
-            </div>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_2_accuracy_threshold_impact.png"
+                alt="Accuracy Threshold Impact"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.2:</strong> Accuracy Threshold Impact (C1 vs C4)</p>
+              </figcaption>
+            </figure>
 
-            <h4 id="4.4.2-latency-threshold-ablation-study">4.4.2 Latency Threshold</h4>
+            <h4 id="4.4.2-latency-threshold-ablation-study">4.4.2 Latency Impact</h4>
             <p>
-              Impact of varying latency requirements (0.006s vs 0.015s) on controller performance.
+              Isolates effect of latency constraints (0.006s vs 0.015s) by comparing controllers C1
+              (lat=0.015s) vs C4 (lat=0.006s) with identical other parameters.
             </p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.3:</strong> Performance metrics by latency threshold
-              <ul>
-                <li>Success rates under different latency constraints</li>
-                <li>Model selection patterns by latency requirement</li>
-                <li>Trade-off analysis between accuracy and latency constraints</li>
-              </ul>
-            </div>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_3_latency_impact.png"
+                alt="Latency Impact"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.3:</strong> Latency Impact (C1 vs C4)</p>
+              </figcaption>
+            </figure>
 
-            <h4 id="4.4.3-reward-weights-ablation-study">4.4.3 Reward Weights</h4>
-            <p>Impact of different reward weight configurations on controller behavior.</p>
-
-            <b>Performance-Focused Configuration</b>
-            <p>Configuration: Success=20, Small Miss=5, Large Miss=8, Carbon=7</p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.4:</strong> Performance-focused reward weights results
-              <ul>
-                <li>High success rate emphasis outcomes</li>
-                <li>Carbon efficiency under performance focus</li>
-                <li>Battery utilization patterns</li>
-              </ul>
-            </div>
-
-            <b>Carbon-Focused Configuration</b>
-            <p>Configuration: Success=5, Small Miss=7, Large Miss=10, Carbon=15</p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.5:</strong> Carbon-focused reward weights results
-              <ul>
-                <li>Carbon penalty impact on charging decisions</li>
-                <li>Model selection shifts with carbon emphasis</li>
-                <li>Success rate trade-offs for carbon efficiency</li>
-              </ul>
-            </div>
-
-            <h4 id="4.4.4-battery-configuration-ablation-study">4.4.4 Battery Configuration</h4>
-            <p>Impact of different battery capacities and charge rates on system performance.</p>
-
-            <b>Large Battery Configuration</b>
-            <p>Configuration: 610 mWh capacity, 0.000269 mWh/s charge rate</p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.6:</strong> Large battery configuration results
-              <ul>
-                <li>Energy storage advantages with larger battery</li>
-                <li>Charging patterns for slow charge rate</li>
-                <li>Model selection capabilities with high energy budget</li>
-              </ul>
-            </div>
-
-            <b>Small Battery Configuration</b>
-            <p>Configuration: 105 mWh capacity, 0.001598 mWh/s charge rate</p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.7:</strong> Small battery configuration results
-              <ul>
-                <li>Energy constraints impact on model selection</li>
-                <li>Frequent charging necessity with small battery</li>
-                <li>Performance optimization under energy constraints</li>
-              </ul>
-            </div>
-
-            <h4 id="4.4.5-seasonal-variation-ablation-study">4.4.5 Seasonal Variation</h4>
+            <h4 id="4.4.3-reward-weights-ablation-study">4.4.3 Reward Structure Impact</h4>
             <p>
-              Controller performance across different test dates representing seasonal carbon
-              patterns.
+              Isolates effect of reward weights by comparing controllers C4 (carb=7,
+              performance-focused) vs C3 (carb=15, carbon-focused) with identical system parameters.
             </p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.8:</strong> Seasonal performance variation across test dates
-              <ul>
-                <li>Performance by season (Feb/May/Aug/Nov 2024)</li>
-                <li>Carbon intensity patterns and controller adaptation</li>
-                <li>Charging behavior changes by carbon availability</li>
-              </ul>
-            </div>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_4_reward_structure_impact.png"
+                alt="Reward Structure Impact"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.4:</strong> Reward Structure Impact (C4 vs C3)</p>
+              </figcaption>
+            </figure>
+
+            <h4 id="4.4.4-battery-configuration-ablation-study">
+              4.4.4 Battery Configuration Impact
+            </h4>
+            <p>
+              Isolates effect of hardware constraints by comparing controllers C1 (105 mWh, 0.001598
+              rate) vs C2 (610 mWh, 0.000269 rate) with identical other parameters.
+            </p>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_5_battery_configuration_impact.png"
+                alt="Battery Configuration Impact"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.5:</strong> Battery Configuration Impact (C1 vs C2)</p>
+              </figcaption>
+            </figure>
+
+            <h4 id="4.4.5-seasonal-variation-ablation-study">4.4.5 Seasonal Variation Analysis</h4>
+            <p>
+              Analyzes performance patterns across 4 seasons (winter, spring, summer, fall) with
+              diverse controller configurations to understand energy data impact.
+            </p>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_6_seasonal_variation.png"
+                alt="Seasonal Variation Analysis"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.6:</strong> Seasonal Variation Analysis</p>
+              </figcaption>
+            </figure>
 
             <h4 id="4.4.6-controller-comparison-ablation-study">4.4.6 Controller Comparison</h4>
             <p>
               Detailed comparison between Oracle, ML, and Naive controllers across all
               configurations.
             </p>
-            <div class="chart-placeholder">
-              <strong>Figure 4.9:</strong> Oracle vs ML controller performance gap
-              <ul>
-                <li>Success rate gap by model configuration</li>
-                <li>Utility reward gap analysis</li>
-                <li>Uptime metric comparison</li>
-                <li>ML imitation quality assessment</li>
-              </ul>
-            </div>
 
-            <b>Naive Controller Baseline Analysis</b>
-            <div class="chart-placeholder">
-              <strong>Figure 4.10:</strong> Naive controller performance as baseline
-              <ul>
-                <li>Naive vs Oracle performance gap</li>
-                <li>ML improvement over naive baseline</li>
-                <li>Usefulness of learned policy vs simple heuristic</li>
-              </ul>
-            </div>
+            <h4 id="4.4.6-controller-comparison-ablation-study">
+              4.4.6 Controller Performance Gaps
+            </h4>
+            <p>
+              Comprehensive comparison of Oracle vs ML vs Naive controllers across all model
+              configurations to quantify ML learning effectiveness and optimization gaps.
+            </p>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_7_performance_gaps.png"
+                alt="Controller Performance Gaps"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.7:</strong> Controller Performance Gaps</p>
+              </figcaption>
+            </figure>
 
-            <h4 id="4.4.7-model-selection-patterns">4.4.7 Model Selection Patterns</h4>
-            <div class="chart-placeholder">
-              <strong>Figure 4.11:</strong> YOLOv10 model selection frequency by accuracy threshold
-              <ul>
-                <li>Preferred model variants for different accuracy requirements</li>
-                <li>Energy usage patterns by accuracy threshold</li>
-              </ul>
-            </div>
+            <h4 id="4.4.7-reward-weight-sensitivity">4.4.7 Reward Weight Sensitivity</h4>
+            <p>
+              Compares performance-focused (carb7) vs carbon-focused (carb15) optimization across
+              different hardware configurations to understand objective function impact.
+            </p>
+            <figure class="chart-placeholder">
+              <img
+                src="figure_4_8_reward_sensitivity.png"
+                alt="Reward Weight Sensitivity"
+                style="max-width: 100%; height: auto;"
+              />
+              <figcaption>
+                <p><strong>Figure 4.8:</strong> Reward Weight Sensitivity</p>
+              </figcaption>
+            </figure>
           </section>
 
           <!-- Discussion & Conclusions Section -->
