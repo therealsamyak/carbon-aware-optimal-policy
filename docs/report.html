@@ -1625,24 +1625,34 @@ generate_comparative_analysis(controllers)</code></pre>
             <h2>5. Discussion & Conclusions</h2>
             <h3 id="worked-well">5.1 What worked well and why?</h3>
 
-            <h4>Oracle planning produced high-quality trajectories</h4>
             <p>
-              The finite-horizon dynamic programming oracle consistently produced feasible
-              state–action trajectories that respected battery constraints while optimizing the
-              reward trade-offs. This provided a strong expert policy for imitation learning and a
-              reliable upper-bound baseline for comparison.
+              The discretized oracle approach turned out to be a really solid baseline. Even with
+              our coarse discretization, the oracle consistently produced feasible trajectories that
+              respected battery constraints while optimizing the reward trade-offs. As shown in
+              <a href="#model-performance-comparison">Section 4.3</a> (Figure 4.1), the oracle's
+              performance set a reliable upper bound that helped us understand what was actually
+              achievable.
             </p>
-            <p><strong>Where to cite data:</strong></p>
-            <ul>
-              <li>
-                Reference <a href="#model-performance-comparison">Section 4.3</a> (Figure 4.1) to
-                show oracle performance across controller configurations.
-              </li>
-              <li>
-                Reference <a href="#ablation-studies">Section 4.4</a> (Figures 4.2–4.11) to show how
-                oracle behavior changes with constraints and weights.
-              </li>
-            </ul>
+
+            <p>
+              I was surprised how well imitation learning worked despite the partial observability.
+              The custom controller had to learn from just the battery level, current carbon
+              intensity, and carbon change - no future knowledge or timestep information. Yet the
+              training results from <a href="#controller-training-statistics">Section 4.2</a> show
+              that the model could match the oracle's decision patterns pretty well. The performance
+              gap analysis in
+              <a href="#controller-comparison-ablation-study">Section 4.4.6</a> confirms that the ML
+              controller closed most of the gap to the oracle while being much better than naive.
+            </p>
+
+            <p>
+              What really caught me off guard was how well the naive approach performed. Going into
+              this, I expected the naive controller to be dramatically worse, but the controller
+              comparison data shows it wasn't significantly worse than the other methods. This makes
+              it actually the most practical solution - it's simple, requires no training, and gives
+              you most of the benefit without the computational overhead of generating oracle data
+              or training neural networks. Sometimes the simplest approach is the most robust one.
+            </p>
 
             <h4>Imitation learning matched oracle decisions under partial observability</h4>
             <p>
@@ -1683,60 +1693,16 @@ generate_comparative_analysis(controllers)</code></pre>
             </ul>
             <h3 id="didnt-work">5.2 What didn't work and why?</h3>
 
-            <h4>Oracle data generation was computationally expensive</h4>
             <p>
-              Even with discretization and K-nearest neighbor policy lookup, solving the oracle for
-              many parameter combinations is costly. This limited the breadth of parameter coverage
-              and constrained how many controllers could be trained within the project timeline.
+              Honestly, the biggest bottleneck was the runtime cost of generating all the oracle
+              data. Even with our discretization and K-nearest neighbor tricks, solving the MDP for
+              multiple parameter combinations just ate up so much computational time. As you can see
+              from the data generation parameters in <a href="#results-parameters">Section 4.1</a>,
+              we were limited to just a few locations and seasonal combinations because each oracle
+              solve took forever. This really constrained how broad our parameter coverage could be
+              and ultimately limited how many controllers we could realistically train within the
+              project timeline.
             </p>
-            <p><strong>Where to cite data:</strong></p>
-            <ul>
-              <li>
-                Reference <a href="#results-parameters">Section 4.1</a> (Data Generation Parameters)
-                to show the limited set of locations, dates, and configuration combinations used.
-              </li>
-              <li>
-                Reference <a href="#controller-training-statistics">Section 4.2</a> to show the
-                finite number of trained controllers and their parameter settings.
-              </li>
-            </ul>
-
-            <h4>Generalization beyond trained parameter sets was not supported</h4>
-            <p>
-              The custom controller was trained per-controller configuration rather than as a single
-              universal policy. As a result, the learned model is not plug-and-play for unseen
-              parameter settings without retraining, which limits practical deployment flexibility.
-            </p>
-            <p><strong>Where to cite data:</strong></p>
-            <ul>
-              <li>
-                Reference <a href="#controller-training-statistics">Section 4.2</a> to highlight
-                that each controller corresponds to a fixed parameter tuple.
-              </li>
-              <li>
-                Reference <a href="#ablation-studies">Section 4.4</a> to motivate why broader
-                coverage would be needed for a single generalized policy.
-              </li>
-            </ul>
-
-            <h4>Simulation fidelity limitations may bias performance estimates</h4>
-            <p>
-              Energy consumption is estimated using pre-computed model profiles rather than measured
-              at runtime, and the simulation does not include idle power or controller inference
-              overhead. These omissions can cause optimistic estimates of feasibility, carbon cost,
-              and real-world deployability.
-            </p>
-            <p><strong>Where to cite data:</strong></p>
-            <ul>
-              <li>
-                Reference <a href="#limitations">Section 5.3</a> to enumerate the missing energy and
-                latency components.
-              </li>
-              <li>
-                If available, add a future results figure comparing estimated vs measured energy in
-                a small hardware validation experiment.
-              </li>
-            </ul>
             <h3 id="limitations">5.3 Limitations</h3>
 
             <p>
