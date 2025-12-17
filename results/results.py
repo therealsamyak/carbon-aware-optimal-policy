@@ -56,7 +56,6 @@ class ResultsAnalyzer:
         # Set paths from config
         self.batch_results_dir = self.config["batch_results_dir"]
         self.output_dir = self.config["output_dir"]
-        self.controller_mapping = self.config["controller_mapping"]
 
         # Initialize data containers
         self.batch_data = None
@@ -171,7 +170,8 @@ class ResultsAnalyzer:
 
             # Store the original model file for controller mapping
             config["model_file"] = model_file
-            config["short_name"] = self._get_short_name(config)
+            config["controller_name"] = self._extract_controller_name(model_file)
+            config["short_name"] = config["controller_name"]
 
             self.model_configs[model_file] = config
 
@@ -184,29 +184,18 @@ class ResultsAnalyzer:
         else:
             return "mixed"
 
+    def _extract_controller_name(self, model_filename: str) -> str:
+        """Extract controller name (C1, C2, etc.) from model filename."""
+        if "_controller_" not in model_filename:
+            raise ValueError(
+                f"Invalid model filename format: {model_filename}. Expected pattern: 'C[1-9]_controller_...'"
+            )
+        return model_filename.split("_controller_")[0]
+
     def _get_short_name(self, config: Dict) -> str:
         """Extract controller short name from prefixed model filename."""
         model_file = config.get("model_file", "")
-
-        # Look up in controller mapping (now: C1 -> model filename)
-        # So we need to find which key maps to this model file
-        if self.controller_mapping:
-            for short_name, model_filename in self.controller_mapping.items():
-                if model_filename == model_file:
-                    return short_name
-
-        # Fallback: Extract C1, C2, etc. from beginning of filename
-        if model_file.startswith("C"):
-            # Format: "C1_controller_acc..." -> "C1"
-            return model_file.split("_")[0]
-
-        # Fallback to original logic for backward compatibility
-        if model_file.startswith("controller_controller_"):
-            mapping_key = model_file.replace("controller_controller_", "")
-        else:
-            mapping_key = model_file
-
-        return mapping_key
+        return self._extract_controller_name(model_file)
 
     def _load_individual_results(self):
         """Load individual batch result files for detailed analysis."""
