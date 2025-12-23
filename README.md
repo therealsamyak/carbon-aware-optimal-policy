@@ -2,7 +2,7 @@
 
 An intelligent security camera system that dynamically selects YOLO models based on battery level and clean energy availability. Balances accuracy, efficiency, and sustainability through three controller approaches: Oracle (optimal), Custom (learned via imitation), and Naive (baseline).
 
-📖 **Full documentation, results, and technical details:** https://therealsamyak.github.io/ECM202A_2025Fall_Project_2/
+📖 **Full documentation, results, and technical details:** https://therealsamyak.github.io/carbon-aware-optimal-policy/
 
 ## Quick Start
 
@@ -31,4 +31,4 @@ Carbon intensity data from [Electricity Maps](https://www.electricitymaps.com/) 
 
 ---
 
-Visit our [documentation site](https://therealsamyak.github.io/ECM202A_2025Fall_Project_2/) for comprehensive technical details, results, and implementation guide.
+Visit our [documentation site](https://therealsamyak.github.io/carbon-aware-optimal-policy/) for comprehensive technical details, results, and implementation guide.
